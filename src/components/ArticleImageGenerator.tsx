@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -52,15 +51,61 @@ const ArticleImageGenerator = () => {
     }
   };
 
-  const generateAIPrompt = (title: string) => {
-    const prompts = [
-      `Modern minimalist illustration representing "${title}", clean design, professional style`,
-      `Abstract geometric representation of "${title}", modern corporate style`,
-      `Creative visual metaphor for "${title}", clean background, professional design`,
-      `Stylized icon-based illustration about "${title}", modern flat design`,
-      `Contemporary graphic design elements representing "${title}", minimal style`
-    ];
-    return prompts[Math.floor(Math.random() * prompts.length)];
+  const generateBackgroundPattern = (ctx: CanvasRenderingContext2D, title: string, width: number, height: number, backgroundColor: string) => {
+    // Create a more sophisticated background based on title keywords
+    const keywords = title.toLowerCase().split(' ');
+    
+    // Different patterns based on content
+    if (keywords.some(word => ['tech', 'ai', 'digital', 'software', 'programming'].includes(word))) {
+      // Tech pattern - geometric shapes
+      ctx.fillStyle = `${backgroundColor}15`;
+      for (let i = 0; i < 15; i++) {
+        const x = Math.random() * width;
+        const y = Math.random() * height;
+        const size = Math.random() * 60 + 20;
+        ctx.fillRect(x, y, size, size * 0.6);
+      }
+      
+      // Add circuit-like lines
+      ctx.strokeStyle = `${backgroundColor}25`;
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 8; i++) {
+        ctx.beginPath();
+        ctx.moveTo(Math.random() * width, Math.random() * height);
+        ctx.lineTo(Math.random() * width, Math.random() * height);
+        ctx.stroke();
+      }
+    } else if (keywords.some(word => ['business', 'finance', 'marketing', 'sales'].includes(word))) {
+      // Business pattern - charts and bars
+      ctx.fillStyle = `${backgroundColor}20`;
+      for (let i = 0; i < 12; i++) {
+        const x = (width / 12) * i;
+        const barHeight = Math.random() * height * 0.3 + 50;
+        ctx.fillRect(x, height - barHeight, width / 15, barHeight);
+      }
+    } else if (keywords.some(word => ['design', 'creative', 'art', 'ui', 'ux'].includes(word))) {
+      // Creative pattern - organic shapes
+      ctx.fillStyle = `${backgroundColor}18`;
+      for (let i = 0; i < 10; i++) {
+        const x = Math.random() * width;
+        const y = Math.random() * height;
+        const radius = Math.random() * 80 + 30;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else {
+      // Default pattern - mixed geometric
+      ctx.fillStyle = `${backgroundColor}20`;
+      for (let i = 0; i < 20; i++) {
+        const x = Math.random() * width;
+        const y = Math.random() * height;
+        const radius = Math.random() * 50 + 10;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
   };
 
   const generateImage = async () => {
@@ -88,29 +133,21 @@ const ArticleImageGenerator = () => {
 
       // Add gradient overlay
       const gradient = ctx.createLinearGradient(0, 0, settings.width, settings.height);
-      gradient.addColorStop(0, `${settings.backgroundColor}80`);
-      gradient.addColorStop(1, `${settings.backgroundColor}40`);
+      gradient.addColorStop(0, `${settings.backgroundColor}90`);
+      gradient.addColorStop(1, `${settings.backgroundColor}60`);
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, settings.width, settings.height);
 
-      // Generate AI-like pattern
-      ctx.fillStyle = `${settings.backgroundColor}20`;
-      for (let i = 0; i < 20; i++) {
-        const x = Math.random() * settings.width;
-        const y = Math.random() * settings.height;
-        const radius = Math.random() * 50 + 10;
-        ctx.beginPath();
-        ctx.arc(x, y, radius, 0, Math.PI * 2);
-        ctx.fill();
-      }
+      // Generate contextual background pattern
+      generateBackgroundPattern(ctx, settings.title, settings.width, settings.height, settings.backgroundColor);
 
       // Add logo if uploaded
       if (settings.logoUrl) {
         const logoImg = document.createElement('img');
         logoImg.onload = () => {
-          const logoSize = Math.min(settings.width, settings.height) * 0.15;
-          const logoX = settings.width - logoSize - 40;
-          const logoY = 40;
+          const logoSize = Math.min(settings.width, settings.height) * 0.12;
+          const logoX = settings.width - logoSize - 30;
+          const logoY = 30;
           
           ctx.save();
           ctx.beginPath();
@@ -127,17 +164,23 @@ const ArticleImageGenerator = () => {
       }
 
       function drawTitleAndFinish() {
-        // Add title
+        // Add title at the bottom with larger font
         ctx.fillStyle = '#ffffff';
-        ctx.font = `bold ${Math.max(24, settings.width * 0.04)}px Arial, sans-serif`;
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+        ctx.shadowBlur = 4;
+        ctx.shadowOffsetY = 2;
+        
+        // Increased font size
+        const fontSize = Math.max(32, settings.width * 0.055);
+        ctx.font = `bold ${fontSize}px Arial, sans-serif`;
         ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
+        ctx.textBaseline = 'bottom';
         
         // Word wrap for title
         const words = settings.title.split(' ');
         const lines: string[] = [];
         let currentLine = '';
-        const maxWidth = settings.width * 0.8;
+        const maxWidth = settings.width * 0.85;
         
         words.forEach(word => {
           const testLine = currentLine + (currentLine ? ' ' : '') + word;
@@ -151,21 +194,38 @@ const ArticleImageGenerator = () => {
         });
         if (currentLine) lines.push(currentLine);
         
-        const lineHeight = Math.max(30, settings.width * 0.05);
-        const startY = settings.height / 2 - (lines.length - 1) * lineHeight / 2;
+        // Position title at bottom with padding
+        const lineHeight = fontSize * 1.2;
+        const bottomPadding = 40;
+        const totalTextHeight = lines.length * lineHeight;
+        const startY = settings.height - bottomPadding - totalTextHeight + lineHeight;
         
+        // Add semi-transparent background for better readability
+        const textBgHeight = totalTextHeight + 30;
+        const textBgGradient = ctx.createLinearGradient(0, settings.height - textBgHeight - bottomPadding + 15, 0, settings.height);
+        textBgGradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+        textBgGradient.addColorStop(1, 'rgba(0, 0, 0, 0.6)');
+        ctx.fillStyle = textBgGradient;
+        ctx.fillRect(0, settings.height - textBgHeight - bottomPadding + 15, settings.width, textBgHeight);
+        
+        // Draw title text
+        ctx.fillStyle = '#ffffff';
         lines.forEach((line, index) => {
           ctx.fillText(line, settings.width / 2, startY + index * lineHeight);
         });
 
-        // Add decorative elements
-        ctx.strokeStyle = '#ffffff40';
-        ctx.lineWidth = 2;
+        // Reset shadow
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetY = 0;
+
+        // Add subtle decorative elements at top
+        ctx.strokeStyle = '#ffffff30';
+        ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.moveTo(settings.width * 0.1, settings.height * 0.2);
-        ctx.lineTo(settings.width * 0.9, settings.height * 0.2);
-        ctx.moveTo(settings.width * 0.1, settings.height * 0.8);
-        ctx.lineTo(settings.width * 0.9, settings.height * 0.8);
+        const decorY = settings.height * 0.15;
+        ctx.moveTo(settings.width * 0.2, decorY);
+        ctx.lineTo(settings.width * 0.8, decorY);
         ctx.stroke();
 
         // Convert to blob and create URL

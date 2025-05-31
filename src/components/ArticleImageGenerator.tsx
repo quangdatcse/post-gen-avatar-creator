@@ -106,7 +106,7 @@ const ArticleImageGenerator = () => {
 
       // Add logo if uploaded
       if (settings.logoUrl) {
-        const logoImg = new Image();
+        const logoImg = document.createElement('img');
         logoImg.onload = () => {
           const logoSize = Math.min(settings.width, settings.height) * 0.15;
           const logoX = settings.width - logoSize - 40;

@@ -15,6 +15,8 @@ interface ImageSettings {
   backgroundColor: string;
   logoFile: File | null;
   logoUrl: string;
+  backgroundImageFile: File | null;
+  backgroundImageUrl: string;
 }
 
 const ArticleImageGenerator = () => {
@@ -24,13 +26,16 @@ const ArticleImageGenerator = () => {
     height: 630,
     backgroundColor: '#3b82f6',
     logoFile: null,
-    logoUrl: ''
+    logoUrl: '',
+    backgroundImageFile: null,
+    backgroundImageUrl: ''
   });
   
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string>('');
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const backgroundInputRef = useRef<HTMLInputElement>(null);
 
   const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -46,6 +51,26 @@ const ArticleImageGenerator = () => {
           ...prev,
           logoFile: file,
           logoUrl: e.target?.result as string
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleBackgroundUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error('File quá lớn. Vui lòng chọn file nhỏ hơn 10MB');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setSettings(prev => ({
+          ...prev,
+          backgroundImageFile: file,
+          backgroundImageUrl: e.target?.result as string
         }));
       };
       reader.readAsDataURL(file);
@@ -355,49 +380,74 @@ const ArticleImageGenerator = () => {
       canvas.width = settings.width;
       canvas.height = settings.height;
 
-      // Generate contextual background
-      generateContextualBackground(ctx, settings.title, settings.width, settings.height, settings.backgroundColor);
-
-      // Add logo if uploaded
-      if (settings.logoUrl) {
-        const logoImg = document.createElement('img');
-        logoImg.onload = () => {
-          const maxLogoSize = Math.min(settings.width, settings.height) * 0.15;
-          const logoAspectRatio = logoImg.naturalWidth / logoImg.naturalHeight;
+      // Use uploaded background image or generate contextual background
+      if (settings.backgroundImageUrl) {
+        const backgroundImg = document.createElement('img');
+        backgroundImg.onload = () => {
+          // Draw background image covering entire canvas
+          ctx.drawImage(backgroundImg, 0, 0, settings.width, settings.height);
           
-          let logoWidth, logoHeight;
-          if (logoAspectRatio > 1) {
-            // Logo is wider than tall
-            logoWidth = maxLogoSize;
-            logoHeight = maxLogoSize / logoAspectRatio;
-          } else {
-            // Logo is taller than wide or square
-            logoHeight = maxLogoSize;
-            logoWidth = maxLogoSize * logoAspectRatio;
-          }
+          // Add dark overlay for text readability
+          const overlay = ctx.createLinearGradient(0, settings.height * 0.7, 0, settings.height);
+          overlay.addColorStop(0, 'rgba(0, 0, 0, 0)');
+          overlay.addColorStop(0.7, 'rgba(0, 0, 0, 0.6)');
+          overlay.addColorStop(1, 'rgba(0, 0, 0, 0.9)');
+          ctx.fillStyle = overlay;
+          ctx.fillRect(0, 0, settings.width, settings.height);
           
-          const logoX = settings.width - logoWidth - 30;
-          const logoY = 30;
-          
-          // Draw logo with proper aspect ratio
-          ctx.drawImage(logoImg, logoX, logoY, logoWidth, logoHeight);
-          
-          drawTitleAndFinish();
+          drawLogoAndTitle();
         };
-        logoImg.src = settings.logoUrl;
+        backgroundImg.src = settings.backgroundImageUrl;
       } else {
-        drawTitleAndFinish();
+        // Generate contextual background
+        generateContextualBackground(ctx, settings.title, settings.width, settings.height, settings.backgroundColor);
+        drawLogoAndTitle();
+      }
+
+      function drawLogoAndTitle() {
+        // Add logo if uploaded - made larger
+        if (settings.logoUrl) {
+          const logoImg = document.createElement('img');
+          logoImg.onload = () => {
+            const maxLogoSize = Math.min(settings.width, settings.height) * 0.2; // Increased from 0.15 to 0.2
+            const logoAspectRatio = logoImg.naturalWidth / logoImg.naturalHeight;
+            
+            let logoWidth, logoHeight;
+            if (logoAspectRatio > 1) {
+              // Logo is wider than tall
+              logoWidth = maxLogoSize;
+              logoHeight = maxLogoSize / logoAspectRatio;
+            } else {
+              // Logo is taller than wide or square
+              logoHeight = maxLogoSize;
+              logoWidth = maxLogoSize * logoAspectRatio;
+            }
+            
+            const logoX = settings.width - logoWidth - 30;
+            const logoY = 30;
+            
+            // Draw logo with proper aspect ratio
+            ctx.drawImage(logoImg, logoX, logoY, logoWidth, logoHeight);
+            
+            drawTitleAndFinish();
+          };
+          logoImg.src = settings.logoUrl;
+        } else {
+          drawTitleAndFinish();
+        }
       }
 
       function drawTitleAndFinish() {
-        // Add dark gradient overlay at bottom for text readability
-        const textBgHeight = settings.height * 0.3;
-        const textBgGradient = ctx.createLinearGradient(0, settings.height - textBgHeight, 0, settings.height);
-        textBgGradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
-        textBgGradient.addColorStop(0.7, 'rgba(0, 0, 0, 0.6)');
-        textBgGradient.addColorStop(1, 'rgba(0, 0, 0, 0.9)');
-        ctx.fillStyle = textBgGradient;
-        ctx.fillRect(0, settings.height - textBgHeight, settings.width, textBgHeight);
+        // Add dark gradient overlay at bottom for text readability (only if no background image)
+        if (!settings.backgroundImageUrl) {
+          const textBgHeight = settings.height * 0.3;
+          const textBgGradient = ctx.createLinearGradient(0, settings.height - textBgHeight, 0, settings.height);
+          textBgGradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+          textBgGradient.addColorStop(0.7, 'rgba(0, 0, 0, 0.6)');
+          textBgGradient.addColorStop(1, 'rgba(0, 0, 0, 0.9)');
+          ctx.fillStyle = textBgGradient;
+          ctx.fillRect(0, settings.height - textBgHeight, settings.width, textBgHeight);
+        }
 
         // Add title at the very bottom
         ctx.fillStyle = '#ffffff';
@@ -506,6 +556,36 @@ const ArticleImageGenerator = () => {
                   className="mt-2"
                   rows={3}
                 />
+              </div>
+
+              <div>
+                <Label>Upload ảnh nền</Label>
+                <div className="mt-2">
+                  <input
+                    ref={backgroundInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleBackgroundUpload}
+                    className="hidden"
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={() => backgroundInputRef.current?.click()}
+                    className="w-full"
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    {settings.backgroundImageFile ? settings.backgroundImageFile.name : 'Chọn ảnh nền'}
+                  </Button>
+                  {settings.backgroundImageUrl && (
+                    <div className="mt-2 flex justify-center">
+                      <img 
+                        src={settings.backgroundImageUrl} 
+                        alt="Background preview" 
+                        className="w-32 h-20 object-cover rounded border-2 border-gray-200"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div>

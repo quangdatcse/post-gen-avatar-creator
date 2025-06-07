@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { Upload, Download, Image } from 'lucide-react';
+import { Upload, Download, Image, Link } from 'lucide-react';
 
 interface ImageSettings {
   title: string;
@@ -17,6 +16,7 @@ interface ImageSettings {
   logoUrl: string;
   backgroundImageFile: File | null;
   backgroundImageUrl: string;
+  backgroundUrlInput: string;
 }
 
 const ArticleImageGenerator = () => {
@@ -28,14 +28,33 @@ const ArticleImageGenerator = () => {
     logoFile: null,
     logoUrl: '',
     backgroundImageFile: null,
-    backgroundImageUrl: ''
+    backgroundImageUrl: '',
+    backgroundUrlInput: ''
   });
   
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string>('');
+  const [backgroundInputMethod, setBackgroundInputMethod] = useState<'upload' | 'url'>('upload');
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const backgroundInputRef = useRef<HTMLInputElement>(null);
+
+  // Function to convert Vietnamese text to URL-friendly format
+  const convertToSlug = (text: string) => {
+    return text
+      .toLowerCase()
+      .replace(/[àáạảãâầấậẩẫăằắặẳẵ]/g, 'a')
+      .replace(/[èéẹẻẽêềếệểễ]/g, 'e')
+      .replace(/[ìíịỉĩ]/g, 'i')
+      .replace(/[òóọỏõôồốộổỗơờớợởỡ]/g, 'o')
+      .replace(/[ùúụủũưừứựửữ]/g, 'u')
+      .replace(/[ỳýỵỷỹ]/g, 'y')
+      .replace(/đ/g, 'd')
+      .replace(/[^a-z0-9\s]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+  };
 
   const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -70,11 +89,43 @@ const ArticleImageGenerator = () => {
         setSettings(prev => ({
           ...prev,
           backgroundImageFile: file,
-          backgroundImageUrl: e.target?.result as string
+          backgroundImageUrl: e.target?.result as string,
+          backgroundUrlInput: ''
         }));
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleBackgroundUrlLoad = () => {
+    if (!settings.backgroundUrlInput.trim()) {
+      toast.error('Vui lòng nhập URL hình ảnh');
+      return;
+    }
+
+    const img = document.createElement('img');
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      ctx.drawImage(img, 0, 0);
+      
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+      setSettings(prev => ({
+        ...prev,
+        backgroundImageUrl: dataUrl,
+        backgroundImageFile: null
+      }));
+      toast.success('Tải ảnh từ URL thành công!');
+    };
+    img.onerror = () => {
+      toast.error('Không thể tải ảnh từ URL. Vui lòng kiểm tra lại URL.');
+    };
+    img.src = settings.backgroundUrlInput;
   };
 
   const generateContextualBackground = (ctx: CanvasRenderingContext2D, title: string, width: number, height: number, backgroundColor: string) => {
@@ -409,7 +460,7 @@ const ArticleImageGenerator = () => {
         if (settings.logoUrl) {
           const logoImg = document.createElement('img');
           logoImg.onload = () => {
-            const maxLogoSize = Math.min(settings.width, settings.height) * 0.2; // Increased from 0.15 to 0.2
+            const maxLogoSize = Math.min(settings.width, settings.height) * 0.25; // Increased from 0.2 to 0.25
             const logoAspectRatio = logoImg.naturalWidth / logoImg.naturalHeight;
             
             let logoWidth, logoHeight;
@@ -518,7 +569,8 @@ const ArticleImageGenerator = () => {
     if (!generatedImageUrl) return;
     
     const link = document.createElement('a');
-    link.download = `${settings.title.slice(0, 50)}-thumbnail.png`;
+    const filename = convertToSlug(settings.title) || 'thumbnail';
+    link.download = `${filename}.png`;
     link.href = generatedImageUrl;
     link.click();
     toast.success('Ảnh đã được tải xuống!');
@@ -559,25 +611,71 @@ const ArticleImageGenerator = () => {
               </div>
 
               <div>
-                <Label>Upload ảnh nền</Label>
-                <div className="mt-2">
-                  <input
-                    ref={backgroundInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleBackgroundUpload}
-                    className="hidden"
-                  />
-                  <Button
-                    variant="outline"
-                    onClick={() => backgroundInputRef.current?.click()}
-                    className="w-full"
-                  >
-                    <Upload className="w-4 h-4 mr-2" />
-                    {settings.backgroundImageFile ? settings.backgroundImageFile.name : 'Chọn ảnh nền'}
-                  </Button>
+                <Label>Ảnh nền</Label>
+                <div className="mt-2 space-y-4">
+                  {/* Method selector */}
+                  <div className="flex gap-2">
+                    <Button
+                      variant={backgroundInputMethod === 'upload' ? 'default' : 'outline'}
+                      onClick={() => setBackgroundInputMethod('upload')}
+                      className="flex-1"
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      Upload file
+                    </Button>
+                    <Button
+                      variant={backgroundInputMethod === 'url' ? 'default' : 'outline'}
+                      onClick={() => setBackgroundInputMethod('url')}
+                      className="flex-1"
+                    >
+                      <Link className="w-4 h-4 mr-2" />
+                      URL ảnh
+                    </Button>
+                  </div>
+
+                  {/* Upload method */}
+                  {backgroundInputMethod === 'upload' && (
+                    <div>
+                      <input
+                        ref={backgroundInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleBackgroundUpload}
+                        className="hidden"
+                      />
+                      <Button
+                        variant="outline"
+                        onClick={() => backgroundInputRef.current?.click()}
+                        className="w-full"
+                      >
+                        <Upload className="w-4 h-4 mr-2" />
+                        {settings.backgroundImageFile ? settings.backgroundImageFile.name : 'Chọn ảnh nền'}
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* URL method */}
+                  {backgroundInputMethod === 'url' && (
+                    <div className="space-y-2">
+                      <Input
+                        placeholder="Nhập URL hình ảnh..."
+                        value={settings.backgroundUrlInput}
+                        onChange={(e) => setSettings(prev => ({...prev, backgroundUrlInput: e.target.value}))}
+                      />
+                      <Button
+                        onClick={handleBackgroundUrlLoad}
+                        disabled={!settings.backgroundUrlInput.trim()}
+                        className="w-full"
+                      >
+                        <Link className="w-4 h-4 mr-2" />
+                        Tải ảnh từ URL
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Preview */}
                   {settings.backgroundImageUrl && (
-                    <div className="mt-2 flex justify-center">
+                    <div className="flex justify-center">
                       <img 
                         src={settings.backgroundImageUrl} 
                         alt="Background preview" 

@@ -35,6 +35,7 @@ const ArticleImageGenerator = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string>('');
   const [backgroundInputMethod, setBackgroundInputMethod] = useState<'upload' | 'url'>('upload');
+  const [isLoadingUrl, setIsLoadingUrl] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const backgroundInputRef = useRef<HTMLInputElement>(null);
@@ -97,35 +98,92 @@ const ArticleImageGenerator = () => {
     }
   };
 
-  const handleBackgroundUrlLoad = () => {
+  const handleBackgroundUrlLoad = async () => {
     if (!settings.backgroundUrlInput.trim()) {
       toast.error('Vui lòng nhập URL hình ảnh');
       return;
     }
 
-    const img = document.createElement('img');
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
+    setIsLoadingUrl(true);
 
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      ctx.drawImage(img, 0, 0);
+    try {
+      // Try to load the image with different CORS approaches
+      const attempts = [
+        // First attempt: direct load
+        () => loadImageDirect(settings.backgroundUrlInput),
+        // Second attempt: use a CORS proxy
+        () => loadImageDirect(`https://api.allorigins.win/raw?url=${encodeURIComponent(settings.backgroundUrlInput)}`),
+        // Third attempt: use another CORS proxy
+        () => loadImageDirect(`https://cors-anywhere.herokuapp.com/${settings.backgroundUrlInput}`),
+      ];
+
+      let success = false;
+      for (const attempt of attempts) {
+        try {
+          const dataUrl = await attempt();
+          setSettings(prev => ({
+            ...prev,
+            backgroundImageUrl: dataUrl,
+            backgroundImageFile: null
+          }));
+          toast.success('Tải ảnh từ URL thành công!');
+          success = true;
+          break;
+        } catch (error) {
+          console.log('Attempt failed, trying next method...', error);
+        }
+      }
+
+      if (!success) {
+        throw new Error('All loading methods failed');
+      }
+
+    } catch (error) {
+      console.error('Error loading image from URL:', error);
+      toast.error('Không thể tải ảnh từ URL. Hãy thử: 1) Kiểm tra URL có đúng không, 2) Sử dụng ảnh từ các trang như Unsplash, Pixabay, 3) Hoặc tải ảnh lên thay vì dùng URL');
+    } finally {
+      setIsLoadingUrl(false);
+    }
+  };
+
+  const loadImageDirect = (url: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = document.createElement('img');
       
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
-      setSettings(prev => ({
-        ...prev,
-        backgroundImageUrl: dataUrl,
-        backgroundImageFile: null
-      }));
-      toast.success('Tải ảnh từ URL thành công!');
-    };
-    img.onerror = () => {
-      toast.error('Không thể tải ảnh từ URL. Vui lòng kiểm tra lại URL.');
-    };
-    img.src = settings.backgroundUrlInput;
+      // Set CORS mode
+      img.crossOrigin = 'anonymous';
+      
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Canvas context not available'));
+            return;
+          }
+
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          ctx.drawImage(img, 0, 0);
+          
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+          resolve(dataUrl);
+        } catch (error) {
+          reject(error);
+        }
+      };
+
+      img.onerror = () => {
+        reject(new Error('Failed to load image'));
+      };
+
+      // Add timeout
+      setTimeout(() => {
+        reject(new Error('Image loading timeout'));
+      }, 10000);
+
+      img.src = url;
+    });
   };
 
   const generateContextualBackground = (ctx: CanvasRenderingContext2D, title: string, width: number, height: number, backgroundColor: string) => {
@@ -658,18 +716,21 @@ const ArticleImageGenerator = () => {
                   {backgroundInputMethod === 'url' && (
                     <div className="space-y-2">
                       <Input
-                        placeholder="Nhập URL hình ảnh..."
+                        placeholder="VD: https://images.unsplash.com/photo-xxx..."
                         value={settings.backgroundUrlInput}
                         onChange={(e) => setSettings(prev => ({...prev, backgroundUrlInput: e.target.value}))}
                       />
                       <Button
                         onClick={handleBackgroundUrlLoad}
-                        disabled={!settings.backgroundUrlInput.trim()}
+                        disabled={!settings.backgroundUrlInput.trim() || isLoadingUrl}
                         className="w-full"
                       >
                         <Link className="w-4 h-4 mr-2" />
-                        Tải ảnh từ URL
+                        {isLoadingUrl ? 'Đang tải...' : 'Tải ảnh từ URL'}
                       </Button>
+                      <p className="text-xs text-gray-500">
+                        Gợi ý: Sử dụng ảnh từ Unsplash, Pixabay hoặc các trang ảnh miễn phí khác
+                      </p>
                     </div>
                   )}
 

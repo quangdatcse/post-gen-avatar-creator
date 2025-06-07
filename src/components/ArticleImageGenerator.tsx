@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -63,7 +64,58 @@ const ArticleImageGenerator = () => {
     ctx.fillRect(0, 0, width, height);
 
     // Generate contextual patterns based on title content
-    if (keywords.some(word => ['technology', 'tech', 'ai', 'artificial', 'intelligence', 'digital', 'software', 'programming', 'code', 'computer', 'data'].includes(word))) {
+    if (keywords.some(word => ['phá', 'dỡ', 'nhà', 'cũ', 'xây', 'dựng', 'công', 'trình', 'múc', 'đập', 'phá'].includes(word))) {
+      // Construction/Demolition background
+      ctx.save();
+      ctx.globalAlpha = 0.4;
+      
+      // Buildings silhouettes
+      ctx.fillStyle = '#ffffff';
+      for (let i = 0; i < 8; i++) {
+        const x = (width / 8) * i;
+        const buildingWidth = width / 10;
+        const buildingHeight = Math.random() * height * 0.3 + 100;
+        ctx.fillRect(x, height - buildingHeight, buildingWidth, buildingHeight);
+        
+        // Windows
+        ctx.fillStyle = backgroundColor;
+        for (let row = 0; row < Math.floor(buildingHeight / 40); row++) {
+          for (let col = 0; col < 3; col++) {
+            const windowX = x + col * (buildingWidth / 4) + 10;
+            const windowY = height - buildingHeight + row * 40 + 10;
+            ctx.fillRect(windowX, windowY, 15, 15);
+          }
+        }
+        ctx.fillStyle = '#ffffff';
+      }
+      
+      // Crane silhouette
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      const craneX = width * 0.7;
+      ctx.moveTo(craneX, height - 50);
+      ctx.lineTo(craneX, height * 0.3);
+      ctx.lineTo(craneX + width * 0.25, height * 0.3);
+      ctx.stroke();
+      
+      // Excavator shape
+      ctx.fillStyle = '#ffffff';
+      const excavatorX = width * 0.2;
+      const excavatorY = height - 80;
+      ctx.fillRect(excavatorX, excavatorY, 80, 40);
+      ctx.fillRect(excavatorX + 20, excavatorY - 30, 40, 30);
+      // Excavator arm
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.moveTo(excavatorX + 60, excavatorY - 15);
+      ctx.lineTo(excavatorX + 120, excavatorY - 40);
+      ctx.lineTo(excavatorX + 140, excavatorY - 20);
+      ctx.stroke();
+      
+      ctx.restore();
+    } else if (keywords.some(word => ['technology', 'tech', 'ai', 'artificial', 'intelligence', 'digital', 'software', 'programming', 'code', 'computer', 'data', 'công', 'nghệ', 'phần', 'mềm'].includes(word))) {
       // Tech background - circuit patterns and geometric shapes
       ctx.save();
       ctx.globalAlpha = 0.3;
@@ -93,7 +145,7 @@ const ArticleImageGenerator = () => {
       }
       
       ctx.restore();
-    } else if (keywords.some(word => ['business', 'finance', 'marketing', 'sales', 'money', 'profit', 'corporate', 'company', 'management'].includes(word))) {
+    } else if (keywords.some(word => ['business', 'finance', 'marketing', 'sales', 'money', 'profit', 'corporate', 'company', 'management', 'kinh', 'doanh', 'tài', 'chính', 'tiền'].includes(word))) {
       // Business background - charts and professional elements
       ctx.save();
       ctx.globalAlpha = 0.25;
@@ -120,7 +172,7 @@ const ArticleImageGenerator = () => {
       ctx.stroke();
       
       ctx.restore();
-    } else if (keywords.some(word => ['design', 'creative', 'art', 'ui', 'ux', 'graphics', 'visual', 'aesthetic', 'beauty', 'style'].includes(word))) {
+    } else if (keywords.some(word => ['design', 'creative', 'art', 'ui', 'ux', 'graphics', 'visual', 'aesthetic', 'beauty', 'style', 'thiết', 'kế', 'nghệ', 'thuật'].includes(word))) {
       // Creative background - organic shapes and artistic elements
       ctx.save();
       ctx.globalAlpha = 0.2;
@@ -151,7 +203,7 @@ const ArticleImageGenerator = () => {
       }
       
       ctx.restore();
-    } else if (keywords.some(word => ['travel', 'journey', 'adventure', 'explore', 'world', 'destination', 'vacation', 'trip'].includes(word))) {
+    } else if (keywords.some(word => ['travel', 'journey', 'adventure', 'explore', 'world', 'destination', 'vacation', 'trip', 'du', 'lịch', 'khám', 'phá'].includes(word))) {
       // Travel background - maps and location elements
       ctx.save();
       ctx.globalAlpha = 0.3;
@@ -183,7 +235,7 @@ const ArticleImageGenerator = () => {
       }
       
       ctx.restore();
-    } else if (keywords.some(word => ['food', 'cooking', 'recipe', 'kitchen', 'chef', 'restaurant', 'eat', 'delicious', 'taste'].includes(word))) {
+    } else if (keywords.some(word => ['food', 'cooking', 'recipe', 'kitchen', 'chef', 'restaurant', 'eat', 'delicious', 'taste', 'ăn', 'nấu', 'món', 'ẩm', 'thực'].includes(word))) {
       // Food background - kitchen and culinary elements
       ctx.save();
       ctx.globalAlpha = 0.25;
@@ -199,6 +251,62 @@ const ArticleImageGenerator = () => {
         ctx.arc(x, y, radius, 0, Math.PI * 2);
         ctx.stroke();
       }
+      
+      ctx.restore();
+    } else if (keywords.some(word => ['xe', 'ô', 'tô', 'car', 'auto', 'vehicle', 'driving', 'road', 'transport', 'giao', 'thông'].includes(word))) {
+      // Automotive background
+      ctx.save();
+      ctx.globalAlpha = 0.3;
+      
+      // Road lines
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 4;
+      for (let i = 0; i < 5; i++) {
+        const y = height * 0.6 + i * 20;
+        ctx.setLineDash([20, 10]);
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+      }
+      ctx.setLineDash([]);
+      
+      // Car silhouettes
+      ctx.fillStyle = '#ffffff';
+      for (let i = 0; i < 4; i++) {
+        const x = (width / 4) * i + 50;
+        const y = height * 0.7;
+        // Car body
+        ctx.fillRect(x, y, 80, 30);
+        // Car roof
+        ctx.fillRect(x + 15, y - 20, 50, 20);
+        // Wheels
+        ctx.beginPath();
+        ctx.arc(x + 20, y + 30, 10, 0, Math.PI * 2);
+        ctx.arc(x + 60, y + 30, 10, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      
+      ctx.restore();
+    } else if (keywords.some(word => ['học', 'giáo', 'dục', 'education', 'school', 'university', 'student', 'learning', 'study', 'knowledge'].includes(word))) {
+      // Education background
+      ctx.save();
+      ctx.globalAlpha = 0.3;
+      
+      // Books stack
+      ctx.fillStyle = '#ffffff';
+      for (let i = 0; i < 6; i++) {
+        const x = Math.random() * width;
+        const y = height - 50 - i * 15;
+        ctx.fillRect(x, y, 60, 12);
+      }
+      
+      // Graduation cap
+      ctx.fillStyle = '#ffffff';
+      const capX = width * 0.8;
+      const capY = height * 0.3;
+      ctx.fillRect(capX - 30, capY, 60, 8);
+      ctx.fillRect(capX - 15, capY - 20, 30, 20);
       
       ctx.restore();
     } else {
@@ -247,23 +355,32 @@ const ArticleImageGenerator = () => {
       canvas.width = settings.width;
       canvas.height = settings.height;
 
-      // Generate contextual background instead of solid color
+      // Generate contextual background
       generateContextualBackground(ctx, settings.title, settings.width, settings.height, settings.backgroundColor);
 
       // Add logo if uploaded
       if (settings.logoUrl) {
         const logoImg = document.createElement('img');
         logoImg.onload = () => {
-          const logoSize = Math.min(settings.width, settings.height) * 0.12;
-          const logoX = settings.width - logoSize - 30;
+          const maxLogoSize = Math.min(settings.width, settings.height) * 0.15;
+          const logoAspectRatio = logoImg.naturalWidth / logoImg.naturalHeight;
+          
+          let logoWidth, logoHeight;
+          if (logoAspectRatio > 1) {
+            // Logo is wider than tall
+            logoWidth = maxLogoSize;
+            logoHeight = maxLogoSize / logoAspectRatio;
+          } else {
+            // Logo is taller than wide or square
+            logoHeight = maxLogoSize;
+            logoWidth = maxLogoSize * logoAspectRatio;
+          }
+          
+          const logoX = settings.width - logoWidth - 30;
           const logoY = 30;
           
-          ctx.save();
-          ctx.beginPath();
-          ctx.arc(logoX + logoSize/2, logoY + logoSize/2, logoSize/2, 0, Math.PI * 2);
-          ctx.clip();
-          ctx.drawImage(logoImg, logoX, logoY, logoSize, logoSize);
-          ctx.restore();
+          // Draw logo with proper aspect ratio
+          ctx.drawImage(logoImg, logoX, logoY, logoWidth, logoHeight);
           
           drawTitleAndFinish();
         };
@@ -273,14 +390,23 @@ const ArticleImageGenerator = () => {
       }
 
       function drawTitleAndFinish() {
+        // Add dark gradient overlay at bottom for text readability
+        const textBgHeight = settings.height * 0.3;
+        const textBgGradient = ctx.createLinearGradient(0, settings.height - textBgHeight, 0, settings.height);
+        textBgGradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+        textBgGradient.addColorStop(0.7, 'rgba(0, 0, 0, 0.6)');
+        textBgGradient.addColorStop(1, 'rgba(0, 0, 0, 0.9)');
+        ctx.fillStyle = textBgGradient;
+        ctx.fillRect(0, settings.height - textBgHeight, settings.width, textBgHeight);
+
         // Add title at the very bottom
         ctx.fillStyle = '#ffffff';
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-        ctx.shadowBlur = 6;
-        ctx.shadowOffsetY = 3;
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+        ctx.shadowBlur = 8;
+        ctx.shadowOffsetY = 2;
         
         // Larger font size
-        const fontSize = Math.max(36, settings.width * 0.06);
+        const fontSize = Math.max(42, settings.width * 0.065);
         ctx.font = `bold ${fontSize}px Arial, sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'bottom';
@@ -305,19 +431,9 @@ const ArticleImageGenerator = () => {
         
         // Position title at the very bottom
         const lineHeight = fontSize * 1.2;
-        const bottomPadding = 20; // Reduced padding to move text closer to bottom
-        const totalTextHeight = lines.length * lineHeight;
-        
-        // Add darker background for better text readability
-        const textBgHeight = totalTextHeight + 40;
-        const textBgGradient = ctx.createLinearGradient(0, settings.height - textBgHeight, 0, settings.height);
-        textBgGradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
-        textBgGradient.addColorStop(1, 'rgba(0, 0, 0, 0.8)');
-        ctx.fillStyle = textBgGradient;
-        ctx.fillRect(0, settings.height - textBgHeight, settings.width, textBgHeight);
+        const bottomPadding = 10; // Very minimal padding to stick to bottom
         
         // Draw title text at the very bottom
-        ctx.fillStyle = '#ffffff';
         const startY = settings.height - bottomPadding;
         
         lines.reverse().forEach((line, index) => {

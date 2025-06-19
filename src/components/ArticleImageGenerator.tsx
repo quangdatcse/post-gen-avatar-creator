@@ -107,53 +107,100 @@ const ArticleImageGenerator = () => {
     setIsLoadingUrl(true);
 
     try {
-      // Try to load the image with different CORS approaches
-      const attempts = [
-        // First attempt: direct load
-        () => loadImageDirect(settings.backgroundUrlInput),
-        // Second attempt: use a CORS proxy
-        () => loadImageDirect(`https://api.allorigins.win/raw?url=${encodeURIComponent(settings.backgroundUrlInput)}`),
-        // Third attempt: use another CORS proxy
-        () => loadImageDirect(`https://cors-anywhere.herokuapp.com/${settings.backgroundUrlInput}`),
+      let imageUrl = settings.backgroundUrlInput;
+      
+      // Convert some common URL formats to direct image URLs
+      if (imageUrl.includes('unsplash.com/photos/')) {
+        // Convert Unsplash photo page to direct image URL
+        const photoId = imageUrl.split('/photos/')[1].split('?')[0].split('/')[0];
+        imageUrl = `https://images.unsplash.com/photo-${photoId}?w=1200&h=800&fit=crop`;
+      } else if (imageUrl.includes('pixabay.com') && !imageUrl.includes('cdn.pixabay')) {
+        toast.error('Vui lòng sử dụng URL ảnh trực tiếp từ Pixabay (click chuột phải vào ảnh và chọn "Copy image address")');
+        setIsLoadingUrl(false);
+        return;
+      }
+
+      console.log('Attempting to load image from URL:', imageUrl);
+
+      // Try multiple CORS proxy services
+      const proxyServices = [
+        // Direct load first (works for CORS-enabled images)
+        imageUrl,
+        // Public CORS proxies
+        `https://cors-anywhere.herokuapp.com/${imageUrl}`,
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(imageUrl)}`,
+        `https://corsproxy.io/?${encodeURIComponent(imageUrl)}`,
+        // Alternative method: try with different headers
+        imageUrl + (imageUrl.includes('?') ? '&' : '?') + 'crossorigin=anonymous'
       ];
 
       let success = false;
-      for (const attempt of attempts) {
+      let lastError = '';
+
+      for (const [index, proxyUrl] of proxyServices.entries()) {
         try {
-          const dataUrl = await attempt();
+          console.log(`Trying method ${index + 1}:`, proxyUrl);
+          const dataUrl = await loadImageFromUrl(proxyUrl);
+          
           setSettings(prev => ({
             ...prev,
             backgroundImageUrl: dataUrl,
             backgroundImageFile: null
           }));
+          
           toast.success('Tải ảnh từ URL thành công!');
           success = true;
           break;
         } catch (error) {
-          console.log('Attempt failed, trying next method...', error);
+          lastError = error instanceof Error ? error.message : 'Unknown error';
+          console.log(`Method ${index + 1} failed:`, lastError);
+          
+          // If it's the first method (direct load), try to give more specific advice
+          if (index === 0 && lastError.includes('CORS')) {
+            console.log('CORS issue detected, trying proxy methods...');
+          }
         }
       }
 
       if (!success) {
-        throw new Error('All loading methods failed');
+        console.error('All loading methods failed. Last error:', lastError);
+        
+        // Provide helpful error message based on URL
+        let errorMessage = 'Không thể tải ảnh từ URL này. ';
+        
+        if (settings.backgroundUrlInput.includes('google.com')) {
+          errorMessage += 'Google Images không cho phép tải trực tiếp. Hãy thử ảnh từ Unsplash hoặc Pixabay.';
+        } else if (settings.backgroundUrlInput.includes('facebook.com') || settings.backgroundUrlInput.includes('instagram.com')) {
+          errorMessage += 'Ảnh từ Facebook/Instagram không thể tải được. Hãy thử nguồn khác.';
+        } else {
+          errorMessage += 'Thử: 1) Dùng ảnh từ Unsplash.com, 2) Click chuột phải → "Copy image address", 3) Hoặc tải ảnh lên máy.';
+        }
+        
+        toast.error(errorMessage);
       }
 
     } catch (error) {
-      console.error('Error loading image from URL:', error);
-      toast.error('Không thể tải ảnh từ URL. Hãy thử: 1) Kiểm tra URL có đúng không, 2) Sử dụng ảnh từ các trang như Unsplash, Pixabay, 3) Hoặc tải ảnh lên thay vì dùng URL');
+      console.error('Unexpected error:', error);
+      toast.error('Có lỗi không xác định. Vui lòng thử lại hoặc dùng ảnh khác.');
     } finally {
       setIsLoadingUrl(false);
     }
   };
 
-  const loadImageDirect = (url: string): Promise<string> => {
+  const loadImageFromUrl = (url: string): Promise<string> => {
     return new Promise((resolve, reject) => {
-      const img = document.createElement('img');
+      const img = new Image();
       
       // Set CORS mode
       img.crossOrigin = 'anonymous';
       
+      // Timeout after 15 seconds
+      const timeoutId = setTimeout(() => {
+        reject(new Error('Timeout: Image took too long to load'));
+      }, 15000);
+      
       img.onload = () => {
+        clearTimeout(timeoutId);
         try {
           const canvas = document.createElement('canvas');
           const ctx = canvas.getContext('2d');
@@ -169,20 +216,23 @@ const ArticleImageGenerator = () => {
           const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
           resolve(dataUrl);
         } catch (error) {
-          reject(error);
+          reject(new Error(`Canvas error: ${error instanceof Error ? error.message : 'Unknown error'}`));
         }
       };
 
-      img.onerror = () => {
-        reject(new Error('Failed to load image'));
+      img.onerror = (error) => {
+        clearTimeout(timeoutId);
+        console.error('Image load error:', error);
+        reject(new Error('Failed to load image - may be blocked by CORS policy'));
       };
 
-      // Add timeout
-      setTimeout(() => {
-        reject(new Error('Image loading timeout'));
-      }, 10000);
-
-      img.src = url;
+      // Try to load the image
+      try {
+        img.src = url;
+      } catch (error) {
+        clearTimeout(timeoutId);
+        reject(new Error(`Invalid URL: ${error instanceof Error ? error.message : 'Unknown error'}`));
+      }
     });
   };
 
@@ -716,7 +766,7 @@ const ArticleImageGenerator = () => {
                   {backgroundInputMethod === 'url' && (
                     <div className="space-y-2">
                       <Input
-                        placeholder="VD: https://images.unsplash.com/photo-xxx..."
+                        placeholder="VD: https://images.unsplash.com/photo-xxx... hoặc URL ảnh bất kỳ"
                         value={settings.backgroundUrlInput}
                         onChange={(e) => setSettings(prev => ({...prev, backgroundUrlInput: e.target.value}))}
                       />
@@ -728,9 +778,12 @@ const ArticleImageGenerator = () => {
                         <Link className="w-4 h-4 mr-2" />
                         {isLoadingUrl ? 'Đang tải...' : 'Tải ảnh từ URL'}
                       </Button>
-                      <p className="text-xs text-gray-500">
-                        Gợi ý: Sử dụng ảnh từ Unsplash, Pixabay hoặc các trang ảnh miễn phí khác
-                      </p>
+                      <div className="text-xs text-gray-500 space-y-1">
+                        <p><strong>Cách dùng:</strong></p>
+                        <p>• Unsplash: Copy URL trang ảnh (sẽ tự động chuyển đổi)</p>
+                        <p>• Ảnh khác: Click chuột phải → "Copy image address"</p>
+                        <p>• Hoặc paste bất kỳ URL ảnh nào từ web</p>
+                      </div>
                     </div>
                   )}
 

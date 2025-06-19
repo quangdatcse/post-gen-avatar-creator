@@ -137,9 +137,7 @@ const ArticleImageGenerator = () => {
     try {
       let imageUrl = settings.backgroundUrlInput;
       
-      // Convert some common URL formats to direct image URLs
       if (imageUrl.includes('unsplash.com/photos/')) {
-        // Convert Unsplash photo page to direct image URL
         const photoId = imageUrl.split('/photos/')[1].split('?')[0].split('/')[0];
         imageUrl = `https://images.unsplash.com/photo-${photoId}?w=1200&h=800&fit=crop`;
       } else if (imageUrl.includes('pixabay.com') && !imageUrl.includes('cdn.pixabay')) {
@@ -150,15 +148,11 @@ const ArticleImageGenerator = () => {
 
       console.log('Attempting to load image from URL:', imageUrl);
 
-      // Try multiple CORS proxy services
       const proxyServices = [
-        // Direct load first (works for CORS-enabled images)
         imageUrl,
-        // Public CORS proxies
         `https://cors-anywhere.herokuapp.com/${imageUrl}`,
         `https://api.allorigins.win/raw?url=${encodeURIComponent(imageUrl)}`,
         `https://corsproxy.io/?${encodeURIComponent(imageUrl)}`,
-        // Alternative method: try with different headers
         imageUrl + (imageUrl.includes('?') ? '&' : '?') + 'crossorigin=anonymous'
       ];
 
@@ -183,7 +177,6 @@ const ArticleImageGenerator = () => {
           lastError = error instanceof Error ? error.message : 'Unknown error';
           console.log(`Method ${index + 1} failed:`, lastError);
           
-          // If it's the first method (direct load), try to give more specific advice
           if (index === 0 && lastError.includes('CORS')) {
             console.log('CORS issue detected, trying proxy methods...');
           }
@@ -193,7 +186,6 @@ const ArticleImageGenerator = () => {
       if (!success) {
         console.error('All loading methods failed. Last error:', lastError);
         
-        // Provide helpful error message based on URL
         let errorMessage = 'Không thể tải ảnh từ URL này. ';
         
         if (settings.backgroundUrlInput.includes('google.com')) {
@@ -219,12 +211,10 @@ const ArticleImageGenerator = () => {
 
   const loadImageFromUrl = (url: string): Promise<string> => {
     return new Promise((resolve, reject) => {
-      const img = new Image();
+      const img = document.createElement('img');
       
-      // Set CORS mode
       img.crossOrigin = 'anonymous';
       
-      // Timeout after 15 seconds
       const timeoutId = setTimeout(() => {
         reject(new Error('Timeout: Image took too long to load'));
       }, 15000);
@@ -255,7 +245,6 @@ const ArticleImageGenerator = () => {
         reject(new Error('Failed to load image - may be blocked by CORS policy'));
       };
 
-      // Try to load the image
       try {
         img.src = url;
       } catch (error) {

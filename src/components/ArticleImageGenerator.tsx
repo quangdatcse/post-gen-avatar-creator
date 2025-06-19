@@ -172,6 +172,8 @@ const ArticleImageGenerator = () => {
           errorMessage += 'Google Images không cho phép tải trực tiếp. Hãy thử ảnh từ Unsplash hoặc Pixabay.';
         } else if (settings.backgroundUrlInput.includes('facebook.com') || settings.backgroundUrlInput.includes('instagram.com')) {
           errorMessage += 'Ảnh từ Facebook/Instagram không thể tải được. Hãy thử nguồn khác.';
+        } else if (settings.backgroundUrlInput.includes('docunhanphuoc.com')) {
+          errorMessage += 'Website này không cho phép tải ảnh trực tiếp. Hãy tải ảnh về máy rồi upload lên.';
         } else {
           errorMessage += 'Thử: 1) Dùng ảnh từ Unsplash.com, 2) Click chuột phải → "Copy image address", 3) Hoặc tải ảnh lên máy.';
         }
@@ -220,9 +222,8 @@ const ArticleImageGenerator = () => {
         }
       };
 
-      img.onerror = (error) => {
+      img.onerror = () => {
         clearTimeout(timeoutId);
-        console.error('Image load error:', error);
         reject(new Error('Failed to load image - may be blocked by CORS policy'));
       };
 

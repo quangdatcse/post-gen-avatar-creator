@@ -36,6 +36,7 @@ const ArticleImageGenerator = () => {
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string>('');
   const [backgroundInputMethod, setBackgroundInputMethod] = useState<'upload' | 'url'>('upload');
   const [isLoadingUrl, setIsLoadingUrl] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const backgroundInputRef = useRef<HTMLInputElement>(null);
@@ -60,41 +61,68 @@ const ArticleImageGenerator = () => {
   const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('File quá lớn. Vui lòng chọn file nhỏ hơn 5MB');
-        return;
-      }
-      
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setSettings(prev => ({
-          ...prev,
-          logoFile: file,
-          logoUrl: e.target?.result as string
-        }));
-      };
-      reader.readAsDataURL(file);
+      processImageFile(file, 'logo');
     }
   };
 
   const handleBackgroundUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error('File quá lớn. Vui lòng chọn file nhỏ hơn 10MB');
-        return;
-      }
-      
-      const reader = new FileReader();
-      reader.onload = (e) => {
+      processImageFile(file, 'background');
+    }
+  };
+
+  const processImageFile = (file: File, type: 'logo' | 'background') => {
+    const maxSize = type === 'logo' ? 5 * 1024 * 1024 : 10 * 1024 * 1024;
+    const sizeText = type === 'logo' ? '5MB' : '10MB';
+    
+    if (file.size > maxSize) {
+      toast.error(`File quá lớn. Vui lòng chọn file nhỏ hơn ${sizeText}`);
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if (type === 'logo') {
+        setSettings(prev => ({
+          ...prev,
+          logoFile: file,
+          logoUrl: e.target?.result as string
+        }));
+      } else {
         setSettings(prev => ({
           ...prev,
           backgroundImageFile: file,
           backgroundImageUrl: e.target?.result as string,
           backgroundUrlInput: ''
         }));
-      };
-      reader.readAsDataURL(file);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const files = Array.from(e.dataTransfer.files);
+    const imageFile = files.find(file => file.type.startsWith('image/'));
+    
+    if (imageFile) {
+      processImageFile(imageFile, 'background');
+      toast.success('Đã tải ảnh nền thành công!');
+    } else {
+      toast.error('Vui lòng kéo thả file ảnh');
     }
   };
 
@@ -544,8 +572,26 @@ const ArticleImageGenerator = () => {
       if (settings.backgroundImageUrl) {
         const backgroundImg = document.createElement('img');
         backgroundImg.onload = () => {
-          // Draw background image covering entire canvas
-          ctx.drawImage(backgroundImg, 0, 0, settings.width, settings.height);
+          // Calculate aspect ratios to prevent stretching
+          const canvasRatio = settings.width / settings.height;
+          const imageRatio = backgroundImg.naturalWidth / backgroundImg.naturalHeight;
+          
+          let drawWidth, drawHeight, offsetX = 0, offsetY = 0;
+          
+          if (imageRatio > canvasRatio) {
+            // Image is wider than canvas ratio - fit to height
+            drawHeight = settings.height;
+            drawWidth = drawHeight * imageRatio;
+            offsetX = (settings.width - drawWidth) / 2;
+          } else {
+            // Image is taller than canvas ratio - fit to width
+            drawWidth = settings.width;
+            drawHeight = drawWidth / imageRatio;
+            offsetY = (settings.height - drawHeight) / 2;
+          }
+          
+          // Draw background image with proper aspect ratio (cover effect)
+          ctx.drawImage(backgroundImg, offsetX, offsetY, drawWidth, drawHeight);
           
           // Add dark overlay for text readability
           const overlay = ctx.createLinearGradient(0, settings.height * 0.7, 0, settings.height);
@@ -752,14 +798,27 @@ const ArticleImageGenerator = () => {
                         onChange={handleBackgroundUpload}
                         className="hidden"
                       />
-                      <Button
-                        variant="outline"
+                      
+                      {/* Drag and Drop Zone */}
+                      <div
+                        className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer ${
+                          isDragging 
+                            ? 'border-blue-500 bg-blue-50' 
+                            : 'border-gray-300 hover:border-gray-400'
+                        }`}
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
                         onClick={() => backgroundInputRef.current?.click()}
-                        className="w-full"
                       >
-                        <Upload className="w-4 h-4 mr-2" />
-                        {settings.backgroundImageFile ? settings.backgroundImageFile.name : 'Chọn ảnh nền'}
-                      </Button>
+                        <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                        <p className="text-sm text-gray-600 mb-1">
+                          {isDragging ? 'Thả ảnh vào đây' : 'Kéo thả ảnh vào đây hoặc click để chọn'}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {settings.backgroundImageFile ? settings.backgroundImageFile.name : 'Hỗ trợ JPG, PNG, GIF (tối đa 10MB)'}
+                        </p>
+                      </div>
                     </div>
                   )}
 

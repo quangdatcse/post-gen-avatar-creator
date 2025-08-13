@@ -25,15 +25,27 @@ const ArticleImageGenerator = () => {
     generatedImageUrl,
     canvasRef,
     generateImage,
-    downloadImage
+    downloadImage,
+    downloadImageWebP,
+    downloadImageJPEG,
+    downloadImagePNG
   } = useImageGenerator();
 
   const handleGenerateImage = () => {
     generateImage(settings);
   };
 
-  const handleDownloadImage = () => {
-    downloadImage(settings);
+  const handleDownloadImage = (format: 'png' | 'jpeg' | 'webp', quality?: number) => {
+    switch (format) {
+      case 'webp':
+        downloadImageWebP(settings, quality);
+        break;
+      case 'jpeg':
+        downloadImageJPEG(settings, quality);
+        break;
+      default:
+        downloadImagePNG(settings);
+    }
   };
 
   return (

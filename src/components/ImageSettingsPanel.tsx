@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Upload, Image, Link } from 'lucide-react';
+import { Upload, Image, Link, Clipboard, Copy } from 'lucide-react';
 import { ImageSettings } from '@/types/imageGenerator';
 import { useImageHandler } from '@/hooks/useImageHandler';
 
@@ -32,12 +32,15 @@ const ImageSettingsPanel: React.FC<ImageSettingsPanelProps> = ({
   const {
     isLoadingUrl,
     isDragging,
+    isPasteEnabled,
+    setIsPasteEnabled,
     handleLogoUpload,
     handleBackgroundUpload,
     handleDragOver,
     handleDragLeave,
     handleDrop,
-    handleBackgroundUrlLoad
+    handleBackgroundUrlLoad,
+    copyImageToClipboard
   } = useImageHandler(settings, setSettings);
 
   return (
@@ -80,6 +83,21 @@ const ImageSettingsPanel: React.FC<ImageSettingsPanelProps> = ({
               >
                 <Link className="w-4 h-4 mr-2" />
                 URL ảnh
+              </Button>
+            </div>
+
+            {/* Paste functionality toggle */}
+            <div className="flex items-center justify-between p-3 border rounded-lg bg-gray-50">
+              <div className="flex items-center gap-2">
+                <Clipboard className="w-4 h-4 text-gray-600" />
+                <span className="text-sm text-gray-700">Cho phép dán ảnh (Ctrl+V)</span>
+              </div>
+              <Button
+                variant={isPasteEnabled ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setIsPasteEnabled(!isPasteEnabled)}
+              >
+                {isPasteEnabled ? 'Đã bật' : 'Tắt'}
               </Button>
             </div>
 
@@ -140,12 +158,25 @@ const ImageSettingsPanel: React.FC<ImageSettingsPanelProps> = ({
             )}
 
             {settings.backgroundImageUrl && (
-              <div className="flex justify-center">
-                <img 
-                  src={settings.backgroundImageUrl} 
-                  alt="Background preview" 
-                  className="w-32 h-20 object-cover rounded border-2 border-gray-200"
-                />
+              <div className="space-y-2">
+                <div className="flex justify-center">
+                  <img 
+                    src={settings.backgroundImageUrl} 
+                    alt="Background preview" 
+                    className="w-32 h-20 object-cover rounded border-2 border-gray-200"
+                  />
+                </div>
+                <div className="flex justify-center">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => copyImageToClipboard(settings.backgroundImageUrl)}
+                    className="flex items-center gap-2"
+                  >
+                    <Copy className="w-3 h-3" />
+                    Copy ảnh
+                  </Button>
+                </div>
               </div>
             )}
           </div>

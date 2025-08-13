@@ -201,12 +201,25 @@ const ImageSettingsPanel: React.FC<ImageSettingsPanelProps> = ({
               {settings.logoFile ? settings.logoFile.name : 'Chọn logo'}
             </Button>
             {settings.logoUrl && (
-              <div className="mt-2 flex justify-center">
-                <img 
-                  src={settings.logoUrl} 
-                  alt="Logo preview" 
-                  className="w-16 h-16 object-cover rounded-full border-2 border-gray-200"
-                />
+              <div className="mt-2 space-y-2">
+                <div className="flex justify-center">
+                  <img 
+                    src={settings.logoUrl} 
+                    alt="Logo preview" 
+                    className="w-16 h-16 object-cover rounded-full border-2 border-gray-200"
+                  />
+                </div>
+                <div className="flex justify-center">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => copyImageToClipboard(settings.logoUrl)}
+                    className="flex items-center gap-2"
+                  >
+                    <Copy className="w-3 h-3" />
+                    Copy logo
+                  </Button>
+                </div>
               </div>
             )}
           </div>

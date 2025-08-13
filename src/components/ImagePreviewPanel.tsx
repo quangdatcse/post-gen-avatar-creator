@@ -71,10 +71,20 @@ const ImagePreviewPanel: React.FC<ImagePreviewPanelProps> = ({
           </div>
 
           {generatedImageUrl && (
-            <Button onClick={onDownloadImage} className="w-full">
-              <Download className="w-4 h-4 mr-2" />
-              Tải xuống ảnh
-            </Button>
+            <div className="space-y-2">
+              <Button onClick={onDownloadImage} className="w-full">
+                <Download className="w-4 h-4 mr-2" />
+                Tải xuống ảnh
+              </Button>
+              <Button 
+                onClick={copyGeneratedImageToClipboard} 
+                variant="outline" 
+                className="w-full"
+              >
+                <Copy className="w-4 h-4 mr-2" />
+                Copy ảnh
+              </Button>
+            </div>
           )}
         </div>
       </CardContent>

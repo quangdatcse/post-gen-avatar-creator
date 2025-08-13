@@ -17,6 +17,29 @@ const ImagePreviewPanel: React.FC<ImagePreviewPanelProps> = ({
   settings,
   onDownloadImage
 }) => {
+  // Handle copy generated image to clipboard
+  const copyGeneratedImageToClipboard = async () => {
+    if (!generatedImageUrl) return;
+    
+    try {
+      const response = await fetch(generatedImageUrl);
+      const blob = await response.blob();
+      
+      if (navigator.clipboard && window.ClipboardItem) {
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            [blob.type]: blob
+          })
+        ]);
+        toast.success('Đã copy ảnh vào clipboard!');
+      } else {
+        toast.error('Trình duyệt không hỗ trợ copy ảnh');
+      }
+    } catch (error) {
+      console.error('Error copying image:', error);
+      toast.error('Không thể copy ảnh');
+    }
+  };
   return (
     <Card className="shadow-xl">
       <CardHeader>

@@ -164,15 +164,64 @@ export const useImageGenerator = () => {
     }
   };
 
-  const downloadImage = (settings: ImageSettings) => {
-    if (!generatedImageUrl) return;
+  const downloadImage = (settings: ImageSettings, format: 'png' | 'jpeg' | 'webp' = 'png', quality: number = 0.9) => {
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      toast.error('Không tìm thấy canvas để tải ảnh');
+      return;
+    }
     
-    const link = document.createElement('a');
     const filename = convertToSlug(settings.title) || 'thumbnail';
-    link.download = `${filename}.png`;
-    link.href = generatedImageUrl;
-    link.click();
-    toast.success('Ảnh đã được tải xuống!');
+    let mimeType: string;
+    let extension: string;
+    
+    switch (format) {
+      case 'webp':
+        mimeType = 'image/webp';
+        extension = 'webp';
+        break;
+      case 'jpeg':
+        mimeType = 'image/jpeg';
+        extension = 'jpg';
+        break;
+      default:
+        mimeType = 'image/png';
+        extension = 'png';
+        quality = 1.0; // PNG không sử dụng quality
+    }
+    
+    canvas.toBlob((blob) => {
+      if (blob) {
+        const link = document.createElement('a');
+        link.download = `${filename}.${extension}`;
+        link.href = URL.createObjectURL(blob);
+        link.click();
+        
+        // Hiển thị thông tin file
+        const sizeMB = (blob.size / (1024 * 1024)).toFixed(2);
+        toast.success(`Ảnh ${format.toUpperCase()} đã được tải xuống! (${sizeMB}MB)`);
+        
+        // Cleanup URL
+        setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+      } else {
+        toast.error(`Không thể tạo ảnh định dạng ${format.toUpperCase()}`);
+      }
+    }, mimeType, quality);
+  };
+
+  // Hàm tải ảnh WebP nén cao
+  const downloadImageWebP = (settings: ImageSettings, quality: number = 0.8) => {
+    downloadImage(settings, 'webp', quality);
+  };
+
+  // Hàm tải ảnh JPEG nén
+  const downloadImageJPEG = (settings: ImageSettings, quality: number = 0.85) => {
+    downloadImage(settings, 'jpeg', quality);
+  };
+
+  // Hàm tải ảnh PNG gốc
+  const downloadImagePNG = (settings: ImageSettings) => {
+    downloadImage(settings, 'png');
   };
 
   return {

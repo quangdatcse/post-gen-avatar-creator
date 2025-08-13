@@ -25,8 +25,8 @@ export const useImageHandler = (settings: ImageSettings, setSettings: React.Disp
           e.preventDefault();
           const file = item.getAsFile();
           if (file) {
-            processImageFile(file, 'background');
-            toast.success('Đã dán ảnh thành công!');
+            processImageFile(file, pasteTarget);
+            toast.success(`Đã dán ảnh ${pasteTarget === 'logo' ? 'logo' : 'nền'} thành công!`);
           }
           break;
         }
@@ -35,7 +35,7 @@ export const useImageHandler = (settings: ImageSettings, setSettings: React.Disp
 
     document.addEventListener('paste', handlePaste);
     return () => document.removeEventListener('paste', handlePaste);
-  }, [isPasteEnabled, setSettings]);
+  }, [isPasteEnabled, pasteTarget, setSettings]);
 
   // Handle copy to clipboard functionality
   const copyImageToClipboard = async (imageUrl: string) => {

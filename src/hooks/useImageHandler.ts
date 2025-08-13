@@ -8,6 +8,7 @@ export const useImageHandler = (settings: ImageSettings, setSettings: React.Disp
   const [isLoadingUrl, setIsLoadingUrl] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isPasteEnabled, setIsPasteEnabled] = useState(false);
+  const [pasteTarget, setPasteTarget] = useState<'logo' | 'background'>('background');
 
   // Add paste event listener
   useEffect(() => {

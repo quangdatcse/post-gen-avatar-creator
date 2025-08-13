@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Upload, Image, Link, Clipboard, Copy } from 'lucide-react';
 import { ImageSettings } from '@/types/imageGenerator';
 import { useImageHandler } from '@/hooks/useImageHandler';
+import { toast } from 'sonner';
 
 interface ImageSettingsPanelProps {
   settings: ImageSettings;
@@ -99,24 +100,102 @@ const ImageSettingsPanel: React.FC<ImageSettingsPanelProps> = ({
                 <Button
                   variant={isPasteEnabled ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => setIsPasteEnabled(!isPasteEnabled)}
+                  onClick={() => {
+                    setIsPasteEnabled(!isPasteEnabled);
+                    if (!isPasteEnabled) {
+                      toast.success('Đã bật tính năng paste! Bây giờ bạn có thể nhấn Ctrl+V để dán ảnh.');
+                    } else {
+                      toast.info('Đã tắt tính năng paste.');
+                    }
+                  }}
                 >
                   {isPasteEnabled ? 'Đã bật' : 'Tắt'}
                 </Button>
               </div>
               
               {isPasteEnabled && (
-                <div className="flex items-center gap-2">
-                  <Label htmlFor="pasteTarget" className="text-sm">Dán vào:</Label>
-                  <Select value={pasteTarget} onValueChange={(value: 'logo' | 'background') => setPasteTarget(value)}>
-                    <SelectTrigger className="w-32 h-8">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="background">Ảnh nền</SelectItem>
-                      <SelectItem value="logo">Logo</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="pasteTarget" className="text-sm">Dán vào:</Label>
+                    <Select value={pasteTarget} onValueChange={(value: 'logo' | 'background') => setPasteTarget(value)}>
+                      <SelectTrigger className="w-32 h-8">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="background">Ảnh nền</SelectItem>
+                        <SelectItem value="logo">Logo</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="text-xs text-green-600 bg-green-50 p-2 rounded border">
+                    ✓ Paste đang hoạt động! Copy ảnh từ bất kỳ đâu và nhấn Ctrl+V (hoặc Cmd+V trên Mac).
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={async () => {
+                      try {
+                        const permission = await navigator.permissions.query({name: 'clipboard-read' as PermissionName});
+                        console.log('Clipboard permission:', permission.state);
+                        
+                        const clipboardItems = await navigator.clipboard.read();
+                        console.log('Clipboard items:', clipboardItems);
+                        
+                        toast.info(`Clipboard permission: ${permission.state}, Items: ${clipboardItems.length}`);
+                      } catch (error) {
+                        console.log('Clipboard test error:', error);
+                        toast.error('Không thể đọc clipboard. Hãy thử copy ảnh và paste bằng Ctrl+V.');
+                      }
+                    }}
+                    className="text-xs"
+                  >
+                    Test Clipboard
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={async () => {
+                      try {
+                        // Thử đọc clipboard trực tiếp
+                        const clipboardItems = await navigator.clipboard.read();
+                        
+                        for (const clipboardItem of clipboardItems) {
+                          for (const type of clipboardItem.types) {
+                            if (type.startsWith('image/')) {
+                              const blob = await clipboardItem.getType(type);
+                              const file = new File([blob], 'pasted-image.' + type.split('/')[1], { type });
+                              
+                              if (pasteTarget === 'logo') {
+                                setSettings(prev => ({
+                                  ...prev,
+                                  logoFile: file,
+                                  logoUrl: URL.createObjectURL(file)
+                                }));
+                              } else {
+                                setSettings(prev => ({
+                                  ...prev,
+                                  backgroundImageFile: file,
+                                  backgroundImageUrl: URL.createObjectURL(file),
+                                  backgroundUrlInput: ''
+                                }));
+                              }
+                              
+                              toast.success(`Đã paste ảnh ${pasteTarget === 'logo' ? 'logo' : 'nền'} thành công!`);
+                              return;
+                            }
+                          }
+                        }
+                        
+                        toast.error('Không tìm thấy ảnh trong clipboard');
+                      } catch (error) {
+                        console.error('Manual paste error:', error);
+                        toast.error('Không thể paste ảnh. Hãy thử copy ảnh và dùng Ctrl+V.');
+                      }
+                    }}
+                    className="text-xs"
+                  >
+                    Paste Thủ Công
+                  </Button>
                 </div>
               )}
             </div>

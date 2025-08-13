@@ -8,7 +8,7 @@ export const useImageHandler = (settings: ImageSettings, setSettings: React.Disp
   const [isLoadingUrl, setIsLoadingUrl] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isPasteEnabled, setIsPasteEnabled] = useState(false);
-  const [pasteTarget, setPasteTarget] = useState<'logo' | 'background'>('background');
+  const [pasteTarget, setPasteTarget] = useState<'logo' | 'background' | 'frame'>('background');
 
   // Add paste event listener
   useEffect(() => {
@@ -44,7 +44,8 @@ export const useImageHandler = (settings: ImageSettings, setSettings: React.Disp
           if (file) {
             console.log(`Processing image file: ${file.name}, size: ${file.size}, type: ${file.type}`);
             processImageFile(file, pasteTarget);
-            toast.success(`Đã dán ảnh ${pasteTarget === 'logo' ? 'logo' : 'nền'} thành công!`);
+            const targetName = pasteTarget === 'logo' ? 'logo' : pasteTarget === 'frame' ? 'khung' : 'nền';
+            toast.success(`Đã dán ảnh ${targetName} thành công!`);
           } else {
             console.log('Could not get file from clipboard item');
             toast.error('Không thể lấy file ảnh từ clipboard');
@@ -89,7 +90,7 @@ export const useImageHandler = (settings: ImageSettings, setSettings: React.Disp
     }
   };
 
-  const processImageFile = (file: File, type: 'logo' | 'background') => {
+  const processImageFile = (file: File, type: 'logo' | 'background' | 'frame') => {
     const maxSize = type === 'logo' ? 5 * 1024 * 1024 : 10 * 1024 * 1024;
     const sizeText = type === 'logo' ? '5MB' : '10MB';
     
@@ -105,6 +106,12 @@ export const useImageHandler = (settings: ImageSettings, setSettings: React.Disp
           ...prev,
           logoFile: file,
           logoUrl: e.target?.result as string
+        }));
+      } else if (type === 'frame') {
+        setSettings(prev => ({
+          ...prev,
+          frameFile: file,
+          frameUrl: e.target?.result as string
         }));
       } else {
         setSettings(prev => ({
@@ -122,6 +129,13 @@ export const useImageHandler = (settings: ImageSettings, setSettings: React.Disp
     const file = event.target.files?.[0];
     if (file) {
       processImageFile(file, 'logo');
+    }
+  };
+
+  const handleFrameUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      processImageFile(file, 'frame');
     }
   };
 
@@ -248,6 +262,7 @@ export const useImageHandler = (settings: ImageSettings, setSettings: React.Disp
     pasteTarget,
     setPasteTarget,
     handleLogoUpload,
+    handleFrameUpload,
     handleBackgroundUpload,
     handleDragOver,
     handleDragLeave,

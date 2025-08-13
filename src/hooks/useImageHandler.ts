@@ -13,28 +13,58 @@ export const useImageHandler = (settings: ImageSettings, setSettings: React.Disp
   // Add paste event listener
   useEffect(() => {
     const handlePaste = async (e: ClipboardEvent) => {
-      if (!isPasteEnabled) return;
+      console.log('Paste event triggered, isPasteEnabled:', isPasteEnabled);
+      
+      if (!isPasteEnabled) {
+        console.log('Paste is disabled, ignoring event');
+        return;
+      }
       
       const items = e.clipboardData?.items;
-      if (!items) return;
+      console.log('Clipboard items:', items ? items.length : 'none');
+      
+      if (!items) {
+        console.log('No clipboard items found');
+        return;
+      }
 
+      let foundImage = false;
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
+        console.log(`Item ${i}: type=${item.type}, kind=${item.kind}`);
         
         if (item.type.indexOf('image') !== -1) {
+          foundImage = true;
           e.preventDefault();
+          console.log('Found image, processing...');
+          
           const file = item.getAsFile();
+          console.log('File from clipboard:', file);
+          
           if (file) {
+            console.log(`Processing image file: ${file.name}, size: ${file.size}, type: ${file.type}`);
             processImageFile(file, pasteTarget);
             toast.success(`Đã dán ảnh ${pasteTarget === 'logo' ? 'logo' : 'nền'} thành công!`);
+          } else {
+            console.log('Could not get file from clipboard item');
+            toast.error('Không thể lấy file ảnh từ clipboard');
           }
           break;
         }
       }
+      
+      if (!foundImage) {
+        console.log('No image found in clipboard');
+        toast.error('Clipboard không chứa ảnh. Hãy copy một ảnh trước khi paste.');
+      }
     };
 
+    console.log('Adding paste event listener');
     document.addEventListener('paste', handlePaste);
-    return () => document.removeEventListener('paste', handlePaste);
+    return () => {
+      console.log('Removing paste event listener');
+      document.removeEventListener('paste', handlePaste);
+    };
   }, [isPasteEnabled, pasteTarget, setSettings]);
 
   // Handle copy to clipboard functionality

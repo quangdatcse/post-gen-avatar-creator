@@ -8,6 +8,7 @@ import { convertToSlug } from '@/utils/imageUtils';
 export const useImageGenerator = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string>('');
+  const [generatedImageData, setGeneratedImageData] = useState<ImageData | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const generateImage = async (settings: ImageSettings) => {
@@ -147,6 +148,9 @@ export const useImageGenerator = () => {
           if (blob) {
             const url = URL.createObjectURL(blob);
             setGeneratedImageUrl(url);
+            // Lưu image data để có thể tạo các định dạng khác
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            setGeneratedImageData(imageData);
             toast.success('Ảnh đã được tạo thành công!');
           }
         }, 'image/png');

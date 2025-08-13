@@ -229,6 +229,9 @@ export const useImageGenerator = () => {
     generatedImageUrl,
     canvasRef,
     generateImage,
-    downloadImage
+    downloadImage,
+    downloadImageWebP,
+    downloadImageJPEG,
+    downloadImagePNG
   };
 };

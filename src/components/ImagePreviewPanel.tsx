@@ -2,8 +2,9 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, Image } from 'lucide-react';
+import { Download, Image, Copy } from 'lucide-react';
 import { ImageSettings } from '@/types/imageGenerator';
+import { toast } from 'sonner';
 
 interface ImagePreviewPanelProps {
   generatedImageUrl: string;

@@ -215,6 +215,8 @@ export const useImageHandler = (settings: ImageSettings, setSettings: React.Disp
     isDragging,
     isPasteEnabled,
     setIsPasteEnabled,
+    pasteTarget,
+    setPasteTarget,
     handleLogoUpload,
     handleBackgroundUpload,
     handleDragOver,

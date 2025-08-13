@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { ImageSettings } from '@/types/imageGenerator';
 import { loadImageFromUrl } from '@/utils/imageUtils';
@@ -7,6 +7,56 @@ import { loadImageFromUrl } from '@/utils/imageUtils';
 export const useImageHandler = (settings: ImageSettings, setSettings: React.Dispatch<React.SetStateAction<ImageSettings>>) => {
   const [isLoadingUrl, setIsLoadingUrl] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [isPasteEnabled, setIsPasteEnabled] = useState(false);
+
+  // Add paste event listener
+  useEffect(() => {
+    const handlePaste = async (e: ClipboardEvent) => {
+      if (!isPasteEnabled) return;
+      
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        
+        if (item.type.indexOf('image') !== -1) {
+          e.preventDefault();
+          const file = item.getAsFile();
+          if (file) {
+            processImageFile(file, 'background');
+            toast.success('Đã dán ảnh thành công!');
+          }
+          break;
+        }
+      }
+    };
+
+    document.addEventListener('paste', handlePaste);
+    return () => document.removeEventListener('paste', handlePaste);
+  }, [isPasteEnabled, setSettings]);
+
+  // Handle copy to clipboard functionality
+  const copyImageToClipboard = async (imageUrl: string) => {
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      
+      if (navigator.clipboard && window.ClipboardItem) {
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            [blob.type]: blob
+          })
+        ]);
+        toast.success('Đã copy ảnh vào clipboard!');
+      } else {
+        toast.error('Trình duyệt không hỗ trợ copy ảnh');
+      }
+    } catch (error) {
+      console.error('Error copying image:', error);
+      toast.error('Không thể copy ảnh');
+    }
+  };
 
   const processImageFile = (file: File, type: 'logo' | 'background') => {
     const maxSize = type === 'logo' ? 5 * 1024 * 1024 : 10 * 1024 * 1024;
@@ -66,7 +116,7 @@ export const useImageHandler = (settings: ImageSettings, setSettings: React.Disp
     setIsDragging(false);
     
     const files = Array.from(e.dataTransfer.files);
-    const imageFile = files.find(file => file.type.startsWith('image/'));
+    const imageFile = files.find((file: File) => file.type.startsWith('image/'));
     
     if (imageFile) {
       processImageFile(imageFile, 'background');

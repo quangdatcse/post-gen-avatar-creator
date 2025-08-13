@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Upload, Image, Link, Clipboard, Copy } from 'lucide-react';
 import { ImageSettings } from '@/types/imageGenerator';
 import { useImageHandler } from '@/hooks/useImageHandler';
@@ -34,6 +35,8 @@ const ImageSettingsPanel: React.FC<ImageSettingsPanelProps> = ({
     isDragging,
     isPasteEnabled,
     setIsPasteEnabled,
+    pasteTarget,
+    setPasteTarget,
     handleLogoUpload,
     handleBackgroundUpload,
     handleDragOver,
@@ -87,18 +90,35 @@ const ImageSettingsPanel: React.FC<ImageSettingsPanelProps> = ({
             </div>
 
             {/* Paste functionality toggle */}
-            <div className="flex items-center justify-between p-3 border rounded-lg bg-gray-50">
-              <div className="flex items-center gap-2">
-                <Clipboard className="w-4 h-4 text-gray-600" />
-                <span className="text-sm text-gray-700">Cho phép dán ảnh (Ctrl+V)</span>
+            <div className="p-3 border rounded-lg bg-gray-50 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Clipboard className="w-4 h-4 text-gray-600" />
+                  <span className="text-sm text-gray-700">Cho phép dán ảnh (Ctrl+V)</span>
+                </div>
+                <Button
+                  variant={isPasteEnabled ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setIsPasteEnabled(!isPasteEnabled)}
+                >
+                  {isPasteEnabled ? 'Đã bật' : 'Tắt'}
+                </Button>
               </div>
-              <Button
-                variant={isPasteEnabled ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setIsPasteEnabled(!isPasteEnabled)}
-              >
-                {isPasteEnabled ? 'Đã bật' : 'Tắt'}
-              </Button>
+              
+              {isPasteEnabled && (
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="pasteTarget" className="text-sm">Dán vào:</Label>
+                  <Select value={pasteTarget} onValueChange={(value: 'logo' | 'background') => setPasteTarget(value)}>
+                    <SelectTrigger className="w-32 h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="background">Ảnh nền</SelectItem>
+                      <SelectItem value="logo">Logo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
 
             {backgroundInputMethod === 'upload' && (

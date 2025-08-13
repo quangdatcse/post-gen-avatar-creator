@@ -212,11 +212,14 @@ export const useImageHandler = (settings: ImageSettings, setSettings: React.Disp
   return {
     isLoadingUrl,
     isDragging,
+    isPasteEnabled,
+    setIsPasteEnabled,
     handleLogoUpload,
     handleBackgroundUpload,
     handleDragOver,
     handleDragLeave,
     handleDrop,
-    handleBackgroundUrlLoad
+    handleBackgroundUrlLoad,
+    copyImageToClipboard
   };
 };

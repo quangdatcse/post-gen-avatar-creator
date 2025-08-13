@@ -10,12 +10,28 @@ const ArticleImageGenerator = () => {
     title: '',
     width: 1200,
     height: 630,
-    backgroundColor: '#3b82f6',
+    backgroundColor: '#3B82F6',
+    textColor: '#FFFFFF',
     logoFile: null,
     logoUrl: '',
     backgroundImageFile: null,
     backgroundImageUrl: '',
-    backgroundUrlInput: ''
+    backgroundUrlInput: '',
+    frameFile: null,
+    frameUrl: '',
+    showTitle: true,
+    showLogo: true,
+    showLocationInfo: false,
+    locationName: '',
+    latitude: '',
+    longitude: '',
+    elevation: '',
+    weatherInfo: '',
+    designStyle: 'modern',
+    textPosition: 'bottom',
+    logoPosition: 'topRight',
+    logoSize: 50,
+    fontSize: 48
   });
   
   const [backgroundInputMethod, setBackgroundInputMethod] = useState<'upload' | 'url'>('upload');

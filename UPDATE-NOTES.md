@@ -21,6 +21,14 @@
   - Icons chỉ hiện trên màn hình lớn
   - Màu sắc theo theme của website
 
+### 3. 🔄 Di chuyển nút "Tạo ảnh AI"
+- **Vị trí mới**: Ở đầu cột bên phải (ImagePreviewPanel)
+- **Vị trí cũ**: ~~Ở cuối cột bên trái (ImageSettingsPanel)~~
+- **Lợi ích**: 
+  - UX tốt hơn - nút action chính gần với kết quả
+  - Workflow trực quan hơn: Settings → Generate → Preview
+  - Tiết kiệm space cho settings panel
+
 ## 🔧 Cải tiến code
 
 ### Interface Updates (`types/imageGenerator.ts`)
@@ -38,8 +46,9 @@ export interface ImageSettings {
 
 ### UI Updates (`components/`)
 - **New Component**: `Footer.tsx` - Footer component với social links
-- **Updated**: `ImageSettingsPanel.tsx` - Thêm checkbox overlay control
-- **Updated**: `ArticleImageGenerator.tsx` - Tích hợp Footer
+- **Updated**: `ImageSettingsPanel.tsx` - Thêm checkbox overlay control, xóa nút generate
+- **Updated**: `ImagePreviewPanel.tsx` - Thêm nút "Tạo ảnh AI" ở đầu
+- **Updated**: `ArticleImageGenerator.tsx` - Tích hợp Footer, cập nhật props
 
 ## 🎯 User Experience
 
@@ -51,8 +60,10 @@ export interface ImageSettings {
 ### Sau khi cập nhật:
 - ✅ Người dùng có thể tắt overlay để ảnh sáng hơn
 - ✅ Footer cung cấp thông tin liên hệ và social media
+- ✅ Nút "Tạo ảnh AI" gần với kết quả preview - UX tốt hơn
+- ✅ Workflow trực quan: Settings → Generate → Preview → Download
 - ✅ Linh hoạt hơn trong việc thiết kế ảnh
-- ✅ Trải nghiệm người dùng được cải thiện
+- ✅ Trải nghiệm người dùng được cải thiện đáng kể
 
 ## 📦 Deployment Notes
 

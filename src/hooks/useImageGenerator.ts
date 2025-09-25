@@ -33,11 +33,11 @@ export const useImageGenerator = () => {
       if (settings.backgroundImageUrl) {
         const backgroundImg = document.createElement('img');
         backgroundImg.onload = () => {
-          // Nếu không hiển thị title và logo, vẽ ảnh gốc không overlay
-          if (!settings.showTitle && !settings.showLogo) {
+          // Nếu không có overlay hoặc không hiển thị title và logo, vẽ ảnh gốc
+          if (!settings.enableOverlay || (!settings.showTitle && !settings.showLogo && !settings.showPhoneNumber)) {
             drawOriginalBackground(ctx, backgroundImg, settings);
           } else {
-            // Vẽ background với hiệu ứng blur và overlay
+            // Vẽ background với hoặc không có overlay tùy theo setting
             drawEnhancedBackground(ctx, backgroundImg, settings);
           }
           drawLogoAndTitle();
@@ -91,25 +91,28 @@ export const useImageGenerator = () => {
         // Vẽ background image
         ctx.drawImage(backgroundImg, offsetX, offsetY, drawWidth, drawHeight);
         
-        // Thêm overlay gradient sophisticatedơn
-        const overlay = ctx.createLinearGradient(0, 0, 0, settings.height);
-        overlay.addColorStop(0, 'rgba(0, 0, 0, 0.1)');
-        overlay.addColorStop(0.3, 'rgba(0, 0, 0, 0.2)');
-        overlay.addColorStop(0.7, 'rgba(0, 0, 0, 0.6)');
-        overlay.addColorStop(1, 'rgba(0, 0, 0, 0.8)');
-        ctx.fillStyle = overlay;
-        ctx.fillRect(0, 0, settings.width, settings.height);
-        
-        // Thêm vignette effect
-        const vignette = ctx.createRadialGradient(
-          settings.width / 2, settings.height / 2, 0,
-          settings.width / 2, settings.height / 2, Math.max(settings.width, settings.height) * 0.8
-        );
-        vignette.addColorStop(0, 'rgba(0, 0, 0, 0)');
-        vignette.addColorStop(0.7, 'rgba(0, 0, 0, 0.1)');
-        vignette.addColorStop(1, 'rgba(0, 0, 0, 0.4)');
-        ctx.fillStyle = vignette;
-        ctx.fillRect(0, 0, settings.width, settings.height);
+        // Chỉ thêm overlay khi enableOverlay = true
+        if (settings.enableOverlay) {
+          // Thêm overlay gradient sophisticatedơn
+          const overlay = ctx.createLinearGradient(0, 0, 0, settings.height);
+          overlay.addColorStop(0, 'rgba(0, 0, 0, 0.1)');
+          overlay.addColorStop(0.3, 'rgba(0, 0, 0, 0.2)');
+          overlay.addColorStop(0.7, 'rgba(0, 0, 0, 0.6)');
+          overlay.addColorStop(1, 'rgba(0, 0, 0, 0.8)');
+          ctx.fillStyle = overlay;
+          ctx.fillRect(0, 0, settings.width, settings.height);
+          
+          // Thêm vignette effect
+          const vignette = ctx.createRadialGradient(
+            settings.width / 2, settings.height / 2, 0,
+            settings.width / 2, settings.height / 2, Math.max(settings.width, settings.height) * 0.8
+          );
+          vignette.addColorStop(0, 'rgba(0, 0, 0, 0)');
+          vignette.addColorStop(0.7, 'rgba(0, 0, 0, 0.1)');
+          vignette.addColorStop(1, 'rgba(0, 0, 0, 0.4)');
+          ctx.fillStyle = vignette;
+          ctx.fillRect(0, 0, settings.width, settings.height);
+        }
       }
 
       function drawModernGradientBackground(ctx: CanvasRenderingContext2D, settings: ImageSettings) {
@@ -275,12 +278,18 @@ export const useImageGenerator = () => {
             if (settings.showTitle) {
               drawEnhancedTitle(ctx, settings);
             }
+            if (settings.showPhoneNumber && settings.phoneNumber.trim()) {
+              drawPhoneNumber(ctx, settings);
+            }
             drawFrameOverlay();
           };
           logoImg.src = settings.logoUrl;
         } else {
           if (settings.showTitle) {
             drawEnhancedTitle(ctx, settings);
+          }
+          if (settings.showPhoneNumber && settings.phoneNumber.trim()) {
+            drawPhoneNumber(ctx, settings);
           }
           drawFrameOverlay();
         }
@@ -388,7 +397,7 @@ export const useImageGenerator = () => {
         }
         
         ctx.font = `${fontWeight} ${baseFontSize}px ${fontFamily}`;
-        ctx.textAlign = 'left';
+        ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
         
         // Chia text thành nhiều dòng thông minh
@@ -413,8 +422,9 @@ export const useImageGenerator = () => {
         // Tính toán vị trí text dựa trên settings
         const lineHeight = baseFontSize * 1.2;
         const totalTextHeight = lines.length * lineHeight;
-        let startY: number;
         
+        let startY: number;
+
         switch (settings.textPosition) {
           case 'top':
             startY = padding;
@@ -426,9 +436,7 @@ export const useImageGenerator = () => {
           default:
             startY = settings.height - totalTextHeight - padding;
             break;
-        }
-        
-        // Vẽ background cho text dựa trên design style và position
+        }        // Vẽ background cho text dựa trên design style và position
         if (settings.designStyle !== 'minimal') {
           drawTextBackground(ctx, settings, startY, totalTextHeight, padding);
         }
@@ -436,9 +444,10 @@ export const useImageGenerator = () => {
         // Vẽ từng dòng text với style phù hợp
         lines.forEach((line, index) => {
           const y = startY + (index * lineHeight);
-          drawStyledText(ctx, line, padding, y, settings);
+          const x = settings.width / 2; // Căn giữa
+          drawStyledText(ctx, line, x, y, settings);
         });
-        
+
         // Reset effects
         ctx.shadowColor = 'transparent';
         ctx.shadowBlur = 0;
@@ -446,7 +455,172 @@ export const useImageGenerator = () => {
         ctx.shadowOffsetY = 0;
       }
 
-      function drawTextBackground(ctx: CanvasRenderingContext2D, settings: ImageSettings, startY: number, totalTextHeight: number, padding: number) {
+      function drawPhoneNumber(ctx: CanvasRenderingContext2D, settings: ImageSettings) {
+        if (!settings.showPhoneNumber || !settings.phoneNumber.trim()) return;
+        
+        // Font cho số điện thoại (sử dụng phoneFontSize từ slider)
+        const phoneFontSize = settings.phoneFontSize;
+        let fontWeight = '600';
+        let fontFamily = '"Inter", "Helvetica Neue", Arial, sans-serif';
+        
+        switch (settings.designStyle) {
+          case 'classic':
+            fontFamily = '"Times New Roman", Georgia, serif';
+            fontWeight = 'bold';
+            break;
+          case 'minimal':
+            fontFamily = '"Helvetica Neue", Arial, sans-serif';
+            fontWeight = '400';
+            break;
+          case 'gradient':
+            fontWeight = '700';
+            break;
+        }
+        
+        ctx.font = `${fontWeight} ${phoneFontSize}px ${fontFamily}`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        
+        const padding = settings.width * 0.075;
+        let phoneY: number;
+        
+        // Tính toán vị trí dựa trên textPosition và có title không
+        if (settings.showTitle && settings.title.trim()) {
+          // Nếu có title, đặt phone number dưới title
+          const titleFontSize = settings.fontSize;
+          const titleLineHeight = titleFontSize * 1.2;
+          const titleWords = settings.title.split(' ');
+          const titleLines: string[] = [];
+          let currentLine = '';
+          const maxWidth = settings.width * 0.85;
+          
+          // Tạm thời set font để đo title
+          const tempFont = ctx.font;
+          ctx.font = `900 ${titleFontSize}px "Inter", "Helvetica Neue", Arial, sans-serif`;
+          
+          titleWords.forEach(word => {
+            const testLine = currentLine + (currentLine ? ' ' : '') + word;
+            const metrics = ctx.measureText(testLine);
+            if (metrics.width > maxWidth && currentLine) {
+              titleLines.push(currentLine);
+              currentLine = word;
+            } else {
+              currentLine = testLine;
+            }
+          });
+          if (currentLine) titleLines.push(currentLine);
+          
+          // Khôi phục font
+          ctx.font = tempFont;
+          
+          const titleHeight = titleLines.length * titleLineHeight;
+          
+          switch (settings.textPosition) {
+            case 'top':
+              phoneY = padding + titleHeight + (titleLineHeight * 0.3);
+              break;
+            case 'center':
+              const centerStartY = (settings.height - titleHeight) / 2;
+              phoneY = centerStartY + titleHeight + (titleLineHeight * 0.3);
+              break;
+            case 'bottom':
+            default:
+              const bottomStartY = settings.height - titleHeight - padding;
+              phoneY = bottomStartY + titleHeight + (titleLineHeight * 0.3);
+              break;
+          }
+        } else {
+          // Nếu không có title, đặt phone number theo textPosition
+          switch (settings.textPosition) {
+            case 'top':
+              phoneY = padding;
+              break;
+            case 'center':
+              phoneY = (settings.height - phoneFontSize) / 2;
+              break;
+            case 'bottom':
+            default:
+              phoneY = settings.height - phoneFontSize - padding;
+              break;
+          }
+        }
+        
+        // Vẽ với style phù hợp
+        const phoneX = settings.width / 2; // Căn giữa
+        
+        switch (settings.designStyle) {
+          case 'classic':
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+            ctx.shadowBlur = 3;
+            ctx.shadowOffsetX = 1;
+            ctx.shadowOffsetY = 1;
+            ctx.fillStyle = settings.textColor;
+            ctx.fillText(settings.phoneNumber, phoneX, phoneY);
+            break;
+            
+          case 'minimal':
+            ctx.fillStyle = settings.textColor;
+            ctx.fillText(settings.phoneNumber, phoneX, phoneY);
+            break;
+            
+          case 'gradient':
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+            ctx.shadowBlur = 6;
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 2;
+            
+            const phoneGradient = ctx.createLinearGradient(phoneX - ctx.measureText(settings.phoneNumber).width/2, phoneY, phoneX + ctx.measureText(settings.phoneNumber).width/2, phoneY);
+            const baseColor = hexToRgb(settings.textColor);
+            if (baseColor) {
+              const [h, s, l] = rgbToHsl(baseColor.r, baseColor.g, baseColor.b);
+              const lighter = hslToRgb(h, s, Math.min(l + 0.2, 1));
+              const darker = hslToRgb(h, s, Math.max(l - 0.1, 0));
+              phoneGradient.addColorStop(0, `rgb(${lighter.r}, ${lighter.g}, ${lighter.b})`);
+              phoneGradient.addColorStop(0.5, settings.textColor);
+              phoneGradient.addColorStop(1, `rgb(${darker.r}, ${darker.g}, ${darker.b})`);
+            } else {
+              phoneGradient.addColorStop(0, '#ffffff');
+              phoneGradient.addColorStop(0.5, '#ffd700');
+              phoneGradient.addColorStop(1, '#ffffff');
+            }
+            
+            ctx.fillStyle = phoneGradient;
+            ctx.fillText(settings.phoneNumber, phoneX, phoneY);
+            break;
+            
+          default: // modern
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+            ctx.shadowBlur = 6;
+            ctx.shadowOffsetX = 1;
+            ctx.shadowOffsetY = 1;
+            
+            const modernPhoneGradient = ctx.createLinearGradient(phoneX - ctx.measureText(settings.phoneNumber).width/2, phoneY, phoneX + ctx.measureText(settings.phoneNumber).width/2, phoneY);
+            const modernBase = hexToRgb(settings.textColor);
+            if (modernBase) {
+              const [h, s, l] = rgbToHsl(modernBase.r, modernBase.g, modernBase.b);
+              const light = hslToRgb(h, s, Math.min(l + 0.15, 1));
+              const mid = hslToRgb(h, s, Math.max(l - 0.05, 0));
+              const dark = hslToRgb(h, s, Math.max(l - 0.15, 0));
+              modernPhoneGradient.addColorStop(0, `rgb(${light.r}, ${light.g}, ${light.b})`);
+              modernPhoneGradient.addColorStop(0.7, `rgb(${mid.r}, ${mid.g}, ${mid.b})`);
+              modernPhoneGradient.addColorStop(1, `rgb(${dark.r}, ${dark.g}, ${dark.b})`);
+            } else {
+              modernPhoneGradient.addColorStop(0, '#ffffff');
+              modernPhoneGradient.addColorStop(0.7, '#f0f0f0');
+              modernPhoneGradient.addColorStop(1, '#e0e0e0');
+            }
+
+            ctx.fillStyle = modernPhoneGradient;
+            ctx.fillText(settings.phoneNumber, phoneX, phoneY);
+            break;
+        }
+        
+        // Reset shadow
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+      }      function drawTextBackground(ctx: CanvasRenderingContext2D, settings: ImageSettings, startY: number, totalTextHeight: number, padding: number) {
         const textBgHeight = totalTextHeight + padding * 1.5;
         let gradient;
         

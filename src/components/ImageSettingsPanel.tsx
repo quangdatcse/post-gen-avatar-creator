@@ -19,17 +19,13 @@ interface ImageSettingsPanelProps {
   setSettings: React.Dispatch<React.SetStateAction<ImageSettings>>;
   backgroundInputMethod: 'upload' | 'url';
   setBackgroundInputMethod: React.Dispatch<React.SetStateAction<'upload' | 'url'>>;
-  onGenerateImage: () => void;
-  isGenerating: boolean;
 }
 
 const ImageSettingsPanel: React.FC<ImageSettingsPanelProps> = ({
   settings,
   setSettings,
   backgroundInputMethod,
-  setBackgroundInputMethod,
-  onGenerateImage,
-  isGenerating
+  setBackgroundInputMethod
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const backgroundInputRef = useRef<HTMLInputElement>(null);
@@ -772,14 +768,6 @@ const ImageSettingsPanel: React.FC<ImageSettingsPanelProps> = ({
             />
           </div>
         </div>
-
-        <Button 
-          onClick={onGenerateImage} 
-          disabled={isGenerating || (settings.showTitle && !settings.title.trim())}
-          className="w-full h-12 text-lg"
-        >
-          {isGenerating ? 'Đang tạo ảnh...' : 'Tạo ảnh AI'}
-        </Button>
       </CardContent>
     </Card>
   );

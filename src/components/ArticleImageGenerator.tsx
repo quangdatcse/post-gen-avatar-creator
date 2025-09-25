@@ -4,6 +4,7 @@ import { ImageSettings } from '@/types/imageGenerator';
 import { useImageGenerator } from '@/hooks/useImageGenerator';
 import ImageSettingsPanel from './ImageSettingsPanel';
 import ImagePreviewPanel from './ImagePreviewPanel';
+import Footer from './Footer';
 
 const ArticleImageGenerator = () => {
   const [settings, setSettings] = useState<ImageSettings>({
@@ -31,7 +32,11 @@ const ArticleImageGenerator = () => {
     textPosition: 'bottom',
     logoPosition: 'topRight',
     logoSize: 50,
-    fontSize: 48
+    fontSize: 48,
+    phoneNumber: '',
+    showPhoneNumber: false,
+    phoneFontSize: 24,
+    enableOverlay: true // Mặc định bật overlay
   });
   
   const [backgroundInputMethod, setBackgroundInputMethod] = useState<'upload' | 'url'>('upload');
@@ -98,6 +103,8 @@ const ArticleImageGenerator = () => {
           style={{ display: 'none' }}
         />
       </div>
+      
+      <Footer />
     </div>
   );
 };

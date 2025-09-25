@@ -87,14 +87,14 @@ const ArticleImageGenerator = () => {
             setSettings={setSettings}
             backgroundInputMethod={backgroundInputMethod}
             setBackgroundInputMethod={setBackgroundInputMethod}
-            onGenerateImage={handleGenerateImage}
-            isGenerating={isGenerating}
           />
 
           <ImagePreviewPanel
             generatedImageUrl={generatedImageUrl}
             settings={settings}
             onDownloadImage={handleDownloadImage}
+            onGenerateImage={handleGenerateImage}
+            isGenerating={isGenerating}
           />
         </div>
 

@@ -188,5 +188,5 @@ Website sẽ hoạt động tại: **https://optimizeimageonline.com/tao-anh-onl
 **Built**: 25/09/2025  
 **Content**: Chỉ files cần thiết để chạy website (không có mã nguồn)
 **Security**: Mã nguồn được bảo vệ hoàn toàn  
-**New Features**: Tắt/bật overlay + Footer với social links
+**New Features**: Tắt/bật overlay + Footer + Nút "Tạo ảnh AI" chuyển sang cột phải
 **Optimized**: Đã loại bỏ files không cần thiết để giảm kích thước

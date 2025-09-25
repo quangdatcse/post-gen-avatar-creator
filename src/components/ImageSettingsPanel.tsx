@@ -133,6 +133,14 @@ const ImageSettingsPanel: React.FC<ImageSettingsPanelProps> = ({
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox
+                id="showPhoneNumber"
+                checked={settings.showPhoneNumber}
+                onCheckedChange={(checked) => setSettings(prev => ({...prev, showPhoneNumber: !!checked}))}
+              />
+              <Label htmlFor="showPhoneNumber" className="text-sm">Hiển thị số điện thoại</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
                 id="showLocationInfo"
                 checked={settings.showLocationInfo}
                 onCheckedChange={(checked) => setSettings(prev => ({...prev, showLocationInfo: !!checked}))}
@@ -140,6 +148,43 @@ const ImageSettingsPanel: React.FC<ImageSettingsPanelProps> = ({
               <Label htmlFor="showLocationInfo" className="text-sm">Hiển thị thông tin vị trí</Label>
             </div>
           </div>
+        </div>
+
+        {/* Phone Number Input */}
+        {settings.showPhoneNumber && (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="phoneNumber">Số điện thoại</Label>
+              <Input
+                id="phoneNumber"
+                placeholder="Nhập số điện thoại..."
+                value={settings.phoneNumber}
+                onChange={(e) => setSettings(prev => ({...prev, phoneNumber: e.target.value}))}
+                className="mt-2"
+              />
+            </div>
+            <div>
+              <Label htmlFor="phoneFontSize">Kích thước chữ số điện thoại: {settings.phoneFontSize}px</Label>
+              <Slider
+                id="phoneFontSize"
+                min={10}
+                max={80}
+                step={2}
+                value={[settings.phoneFontSize]}
+                onValueChange={(value) => setSettings(prev => ({...prev, phoneFontSize: value[0]}))}
+                className="mt-2"
+              />
+            </div>
+          </div>
+        )}
+
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="enableOverlay"
+            checked={settings.enableOverlay}
+            onCheckedChange={(checked) => setSettings(prev => ({...prev, enableOverlay: !!checked}))}
+          />
+          <Label htmlFor="enableOverlay" className="text-sm">Lớp phủ màu đen</Label>
         </div>
 
         <div>

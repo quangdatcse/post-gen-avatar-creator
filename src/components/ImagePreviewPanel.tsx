@@ -13,12 +13,16 @@ interface ImagePreviewPanelProps {
   generatedImageUrl: string;
   settings: ImageSettings;
   onDownloadImage: (format: 'png' | 'jpeg' | 'webp', quality?: number) => void;
+  onGenerateImage: () => void;
+  isGenerating: boolean;
 }
 
 const ImagePreviewPanel: React.FC<ImagePreviewPanelProps> = ({
   generatedImageUrl,
   settings,
-  onDownloadImage
+  onDownloadImage,
+  onGenerateImage,
+  isGenerating
 }) => {
   const [downloadFormat, setDownloadFormat] = useState<'png' | 'jpeg' | 'webp'>('webp');
   const [imageQuality, setImageQuality] = useState<number>(80);
@@ -57,6 +61,15 @@ const ImagePreviewPanel: React.FC<ImagePreviewPanelProps> = ({
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
+          {/* Generate button */}
+          <Button 
+            onClick={onGenerateImage} 
+            disabled={isGenerating || (settings.showTitle && !settings.title.trim())}
+            className="w-full h-12 text-lg"
+          >
+            {isGenerating ? 'Đang tạo ảnh...' : 'Tạo ảnh AI'}
+          </Button>
+          
           <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 min-h-[300px] flex items-center justify-center bg-gray-50">
             {generatedImageUrl ? (
               <div className="text-center">
